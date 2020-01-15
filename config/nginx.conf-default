@@ -1,0 +1,243 @@
+events{
+}
+http{
+	# Lame hardening
+	server_tokens off;
+	# Include mime-types, CSS werkt niet zonder
+	include /etc/nginx/mime.types;
+
+	# Anonimizeren van IP addressen
+	map $remote_addr $remote_addr_anon {
+		~(?P<ip>\d+\.\d+\.\d+)\.    $ip.0;
+		~(?P<ip>[^:]+:[^:]+):       $ip::;
+		default                     0.0.0.0;
+	}
+	log_format anonymized '$remote_addr_anon - $remote_user [$time_local] ' 
+		'"$request" $status $body_bytes_sent ' 
+		'"$http_referer" "$http_user_agent"';
+
+	access_log /var/log/nginx/access.log anonymized;
+
+	# Error log is nog niet ge-deanominiseerd.. is niet mogelijk?
+	# error_log /var/log/nginx/error.log;
+	error_log /dev/null crit;
+
+	gzip on;
+	gzip_disable "msie6";
+	gzip_vary on;
+	gzip_proxied any;
+	gzip_comp_level 6;
+	gzip_buffers 16 8k;
+	gzip_http_version 1.1;
+	gzip_types
+		application/javascript
+		application/rss+xml
+		application/vnd.ms-fontobject
+		application/x-font
+		application/x-font-opentype
+		application/x-font-otf
+		application/x-font-truetype
+		application/x-font-ttf
+		application/x-javascript
+		application/xhtml+xml
+		application/xml
+		font/opentype
+		font/otf
+		font/ttf
+		image/svg+xml
+		image/x-icon
+		text/css
+		text/javascript
+		text/plain
+		text/xml;
+
+	fastcgi_cache_path /var/cache/nginx keys_zone=phpcache:2m max_size=3m inactive=60m use_temp_path=off;
+	fastcgi_cache_key "$scheme$request_method$host$request_uri";
+
+	server {
+		listen      80;
+		listen [::]:80;
+		server_name d64.nl www.d64.nl;
+
+		location / {
+			rewrite ^ https://d64.nl$request_uri? permanent;
+		}
+
+		#for certbot challenges (renewal process)
+		location ~ /.well-known/acme-challenge {
+			allow all;
+			root /var/www/html;
+		}
+	}
+
+	server{
+		listen 443 ssl http2;
+		listen [::]:443 ssl http2;
+		server_name www.d64.nl;
+
+		ssl_certificate /etc/letsencrypt/live/d64.nl/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/d64.nl/privkey.pem;
+
+		ssl_buffer_size 8k;
+
+		ssl_dhparam /etc/ssl/certs/dhparam-2048.pem;
+
+		ssl_protocols TLSv1.2 TLSv1.1 TLSv1;
+		ssl_prefer_server_ciphers on;
+
+		ssl_ciphers ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5;
+
+		ssl_ecdh_curve secp384r1;
+		ssl_session_tickets off;
+
+		# OCSP stapling
+		ssl_stapling on;
+		ssl_stapling_verify on;
+		resolver 8.8.8.8;
+
+		location / {
+			rewrite ^ https://d64.nl$request_uri? permanent;
+		}
+	}
+
+	server{
+		listen 443 ssl http2;
+		listen [::]:443 ssl http2;
+		# No TRACE, DELETE, PUT, OPTIONS, POST
+		if ($request_method !~ ^(GET|HEAD)$) {
+			return 405;
+		}
+		# Set de standaard indexfile
+		index index.php;
+		# Is dit juist?
+		server_name d64.nl;
+		# Set the root directory
+		root /var/www/html;
+
+		add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+		add_header X-XSS-Protection "1; mode=block" always;
+		add_header X-Content-Type-Options "nosniff" always;
+		add_header X-Frame-Options "DENY" always;
+		add_header Content-Security-Policy "default-src 'self'; frame-src https://www.youtube-nocookie.com; frame-ancestors 'none'; form-action 'self';";
+		add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+		add_header Feature-Policy "accelerometer 'none'; camera 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'";
+
+		ssl_certificate /etc/letsencrypt/live/d64.nl/fullchain.pem;
+		ssl_certificate_key /etc/letsencrypt/live/d64.nl/privkey.pem;
+
+		ssl_buffer_size 8k;
+
+		ssl_dhparam /etc/ssl/certs/dhparam-2048.pem;
+
+		ssl_protocols TLSv1.2 TLSv1.1 TLSv1;
+		ssl_prefer_server_ciphers on;
+
+		ssl_ciphers ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5;
+
+		ssl_ecdh_curve secp384r1;
+		ssl_session_tickets off;
+
+		# OCSP stapling
+		ssl_stapling on;
+		ssl_stapling_verify on;
+		resolver 8.8.8.8;
+
+		# Redirect niet gevonden pagina's naar de root met een querystring
+		try_files $uri $uri/ /index.php?404;
+
+		#for certbot challenges (renewal process)
+		location ~ /.well-known/acme-challenge {
+			allow all;
+			root /data/letsencrypt;
+		}
+
+		location /live {
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+			proxy_set_header Host $host;
+			proxy_set_header X-NginX-Proxy true;
+
+			# prevents 502 bad gateway error
+			proxy_buffers 8 32k;
+			proxy_buffer_size 64k;
+			if ($http_origin ~ '^https://d64.nl') {
+				proxy_pass http://Socket:8080;
+			}
+			proxy_redirect off;
+
+			# enables WS support
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+		}
+
+		location /service-worker.js {
+		add_header Cache-Control "public, max-age=3600, s-maxage=3600";
+		#	add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+		#	if_modified_since off;
+		#	expires off;
+		}
+
+		location /includes {
+			rewrite ^ /index.php?404;
+		}
+
+		location /js {
+			rewrite ^ /index.php?404;
+		}
+
+                location /css {
+                        rewrite ^ /index.php?404;
+                }
+
+		location /favicon.ico {
+			access_log off;
+		}
+
+		location /robots.txt {
+			access_log off;
+		}
+
+		location /js/d64.js {
+			access_log off;
+		}
+
+                location /css/w3.css {
+			expires 2d;
+                        access_log off;
+			add_header Cache-Control "public";
+                }
+
+		location ~ "^\/blog" {
+			# Controleer of filename/directory bestaat
+			if (-e $request_filename) {
+				# Rewrite bestanden die er uitzien als: dit_is_een_titel
+				rewrite "^\/blog\/\d{4}\/\d{1,2}\/\d{1,2}\/[a-zA-Z0-9_-]*$" /index.php last;
+				# Rewrite dirs met trailing slashes
+				rewrite .* /index.php last;
+				break;
+			}
+                        rewrite .* /index.php?404;
+		}
+
+		location ~ \.php$ {
+			http2_push /css/w3.css;
+			http2_push /js/d64.js;
+			try_files $uri /index.php;
+			fastcgi_split_path_info ^(.+\.php)(/.+)$;
+			fastcgi_pass PHP:9000;
+			fastcgi_index index.php;
+			include fastcgi_params;
+			fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+			fastcgi_param PATH_INFO $fastcgi_path_info;
+
+			#cache
+			fastcgi_cache phpcache;
+			fastcgi_cache_valid 200 301 302 60m;
+			fastcgi_cache_use_stale error timeout updating invalid_header http_500 http_503;
+			fastcgi_cache_min_uses 1;
+			fastcgi_cache_lock on;
+			add_header X-FastCGI-cache $upstream_cache_status;
+		}
+	}
+}

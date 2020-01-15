@@ -8,7 +8,7 @@
 	"title":"D64.nl - PWA framework"
 },
 "blog":{
-	"class":"d64-blog",
+	"class":"d64Blog",
 	"data":"real",
 	"path":"/blog/",
 	"always":1,

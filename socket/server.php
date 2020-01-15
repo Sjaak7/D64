@@ -1,0 +1,608 @@
+<?php
+
+//error_reporting(E_ALL);
+
+set_time_limit(0);
+ob_implicit_flush();
+
+define('HOST_NAME','172.18.0.52');
+define('PORT','8080');
+$null = NULL;
+
+class d64{
+	private $socketResource;
+	private array $clientSocketArray;
+	private array $clientInfoArray;
+
+	private int $pingTime = 15;
+	private array $consoleData;
+
+	private array $module;
+	public float $moduleTimerLag = 0;
+
+	public int $loop = 1;
+
+	function __construct()
+	{
+		$this->socketResource = socket_create(AF_INET,SOCK_STREAM,SOL_TCP);
+		socket_set_option($this->socketResource,SOL_SOCKET,SO_REUSEADDR,1);
+		socket_bind($this->socketResource,0,PORT);
+		socket_listen($this->socketResource);
+
+		$this->consoleData = [
+			'activeConnections'	=> 0,
+			'connectionsIndex'	=> 0,
+			'massSendTime'		=> 0,
+			'lastReceivedCommand'	=> '',
+			'lastSendCommand'	=> '',
+			'lastOpcode'		=> ''
+			];
+
+		pcntl_async_signals(true);
+
+		pcntl_signal(SIGTERM,array(&$this,"END"));
+	}
+
+	function __destruct()
+	{
+		$this->loop = 0;
+		socket_close($this->socketResource);
+		echo "DOES THIS WORK?\n IT actually does in some cases..";
+	}
+
+	public function registerModule(array $module)
+	{
+		$this->module[$module['name']]['mod'] = new $module['name']($this);
+		if(isset($module['hook']))
+			$this->module[$module['name']]['hook']=$module['hook'];
+		if(isset($module['timer']))
+			$this->module[$module['name']]['timer']=$module['timer'];
+		if(isset($module['end']))
+			$this->module[$module['name']]['end']=$module['end'];
+	}
+
+	private function checkModuleHook(string $hook)
+	{
+		foreach($this->module as $module => $val)
+			if(isset($val['hook']))
+				foreach($val['hook'] as $key => $func)
+					if($func===$hook)
+						$modules[] = $module;
+		return $modules;
+	}
+
+	private function moduleTimers()
+	{
+		foreach($this->module as $module => $val)
+			if(isset($val['timer'])){
+				$key = array_key_first($val['timer']);
+				$this->module[$module]['mod']->$key($val['timer'][$key]);
+			}
+	}
+
+	public function send(string $message,bool $everyone,int $index = 0,string $type = 'text',int $except = 0) : bool
+	{
+		$message = $this->encode($message,$type);
+		$messageLength = strlen($message);
+		if($everyone){
+			$this->consoleData['massSendTime'] = microtime(true);
+			foreach($this->clientSocketArray as $key => $clientSocket){
+				if($clientSocket===$this->socketResource || $except!==0 && $key===$except)
+                        		continue;
+				else{
+					while(true){
+						$sent = socket_write($this->clientSocketArray[$key],$message,$messageLength);
+						if(!$sent)
+							return false;
+						elseif($sent<$messageLength){
+							$message = substr($message,$messageLength);
+							$messageLength -= $sent;
+						}else
+							break;
+					}
+					// delay ping..
+					if(isset($this->clientInfoArray[$key]))
+						$this->clientInfoArray[$key][0] = $this->clientInfoArray[$key][0]+$this->pingTime;
+				}
+			}
+			$this->consoleData['massSendTime'] = microtime(true)-$this->consoleData['massSendTime'];
+		}else @socket_write($this->clientSocketArray[$index],$message,$messageLength);
+		$this->sendCommand($type);
+		return true;
+	}
+
+	private function decode(string $data) : array
+	{
+		$bytes = $data;
+		$d = [
+			'dataLength'	=>'',
+			'mask'		=>'',
+			'codedData'	=>'',
+			'decodedData'	=>'',
+			'opcode'	=>ord($data[0]) & 0xf,
+			'secondByte'	=>sprintf('%08b',ord($bytes[1]))
+		];
+		$masked = ($d['secondByte'][0]=='1') ? true : false;
+		$d['dataLength'] = ($masked===true) ? ord($bytes[1]) & 127 : ord($bytes[1]);
+		if($masked){
+			if($d['dataLength']===126){
+				$d['mask'] = substr($bytes,4,4);
+				$d['codedData'] = substr($bytes,8);
+			}elseif($d['dataLength']===127){
+				$d['mask'] = substr($bytes,10,4);
+				$d['codedData'] = substr($bytes,14);
+			}else{
+				$d['mask'] = substr($bytes,2,4);
+				$d['codedData'] = substr($bytes,6);
+			}
+			for($i=0;$i<strlen($d['codedData']);$i++)
+				$d['decodedData'] .= $d['codedData'][$i] ^ $d['mask'][$i % 4];
+		}else{
+			if($d['dataLength']===126)
+				$d['decodedData'] = substr($bytes,4);
+			elseif($d['dataLength']===127)
+				$d['decodedData'] = substr($bytes,10);
+			else $d['decodedData'] = substr($bytes,2);
+		}
+		return ['opcode'=>$d['opcode'],'data'=>$d['decodedData'],'masked'=>$masked];
+	}
+
+	// A server MUST NOT mask any frames that it sends to the client
+
+	private function encode(string $payload, $type = 'text', $masked = false)
+	{
+		$frameHead = array();
+		$frame = '';
+		$payloadLength = strlen($payload);
+		switch($type){
+			case 'text' :
+				// first byte indicates FIN, Text-Frame (10000001):
+				$frameHead[0] = 129;
+				break;
+			case 'close' :
+				// first byte indicates FIN, Close Frame(10001000):
+				$frameHead[0] = 136;
+				break;
+			case 'ping' :
+				// first byte indicates FIN, Ping frame (10001001):
+				$frameHead[0] = 137;
+				break;
+			case 'pong' :
+				// first byte indicates FIN, Pong frame (10001010):
+				$frameHead[0] = 138;
+				break;
+		}
+		// set mask and payload length (using 1, 3 or 9 bytes)
+		if($payloadLength>65535){
+			$payloadLengthBin = str_split(sprintf('%064b',$payloadLength),8);
+			$frameHead[1] = ($masked===true) ? 255 : 127;
+			for($i=0; $i<8; $i++)
+				$frameHead[$i+2] = bindec($payloadLengthBin[$i]);
+			// most significant bit MUST be 0 (close connection if frame too big)
+			if($frameHead[2]>127){
+				$this->close(1004);
+				return false;
+			}
+		}elseif($payloadLength>125){
+			$payloadLengthBin = str_split(sprintf('%016b',$payloadLength),8);
+			$frameHead[1] = ($masked===true) ? 254 : 126;
+			$frameHead[2] = bindec($payloadLengthBin[0]);
+			$frameHead[3] = bindec($payloadLengthBin[1]);
+		}else
+			$frameHead[1] = ($masked===true) ? $payloadLength + 128 : $payloadLength;
+		// convert frame-head to string:
+		foreach(array_keys($frameHead) as $i)
+			$frameHead[$i] = chr($frameHead[$i]);
+		if($masked===true){
+			// generate a random mask:
+			$mask = array();
+			for($i=0;$i<4;$i++)
+				$mask[$i] = chr(rand(0, 255));
+			$frameHead = array_merge($frameHead,$mask);
+		}
+		$frame = implode('',$frameHead);
+		// append payload to frame:
+		for($i=0; $i<$payloadLength; $i++)
+			$frame .= ($masked===true) ? $payload[$i] ^ $mask[$i % 4] : $payload[$i];
+		return $frame;
+	}
+
+
+	private function handshake(string $received_header, $client_socket_resource, int $key) : array
+	{
+		$headers = [];
+		$lines = preg_split('/\r\n/',$received_header);
+		foreach($lines as $line){
+			$line = chop($line);
+			if(preg_match('/\A(\S+): (.*)\z/',$line,$matches))
+				$headers[$matches[1]] = $matches[2];
+		}
+		$secKey = $headers['Sec-WebSocket-Key'];
+		// See RFC6455 Page 7
+		$secAccept = base64_encode(pack('H*',sha1($secKey.'258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
+		$buffer  =
+			"HTTP/1.1 101 Web Socket Protocol Handshake\r\n".
+			"Upgrade: websocket\r\n".
+			"Connection: Upgrade\r\n".
+			"WebSocket-Origin: ".HOST_NAME."\r\n".
+			"WebSocket-Location: ws://".HOST_NAME.":".PORT."/live\r\n".
+			"Sec-WebSocket-Accept:$secAccept\r\n\r\n";
+		socket_write($client_socket_resource,$buffer,strlen($buffer));
+		//echo print_r($headers);exit();
+		return $headers;
+	}
+
+	private function receivedCommand(string $command) : void
+	{
+		$this->consoleData['lastReceivedCommand'] = $command;
+		$this->console('New received');
+	}
+
+	private function sendCommand(string $command) : void
+	{
+		$this->consoleData['lastSendCommand'] = $command;
+		$this->console('New send');
+	}
+
+	private function countConnections(bool $plusminus) : void
+	{
+		if($plusminus){
+			$this->consoleData['activeConnections']++;
+			$this->consoleData['connectionsIndex']++;
+			echo "\x07";
+		}else $this->consoleData['activeConnections']--;
+	}
+
+	private function console(string $msg) : void
+	{
+		system('clear');
+		echo
+			"================================================================================\n".
+			' connections      : '.$this->consoleData['activeConnections']."\n".
+			' index            : '.$this->consoleData['connectionsIndex']."\n".
+			' last opcode      : '.$this->consoleData['lastOpcode']."\n".
+			' clientsocketarr  : '.count($this->clientSocketArray)."\n".
+			' clientinfoarr    : '.count($this->clientInfoArray)."\n".
+			' last RX command  : '.$this->consoleData['lastReceivedCommand']."\n".
+			' last TX command  : '.$this->consoleData['lastSendCommand']."\n".
+			' system command   : '.$msg."\n".
+			' mass send time   : '.round(($this->consoleData['massSendTime']/1000),5)." s\n".
+			' memory           : '.round(memory_get_usage()/1048576,5)." MiB\n".
+			' memory (real)    : '.round(memory_get_usage(true)/1048576,2)." MiB\n".
+			' memory (peak)    : '.round(memory_get_peak_usage()/1048576,5)." MiB \n".
+			' module timer lag : '.$this->moduleTimerLag."\n".
+			' Directory        : '.__DIR__."\n";
+			//print_r($this->clientInfoArray)."\n";
+	}
+
+	private function jsonValidator(string $msg)
+	{
+		if(!empty($msg))
+			if($data = @json_decode($msg,true));
+				return $data;
+	}
+
+	/*
+	* RFC6455: 5.1: A server MUST close the connection upon
+	* receiving a frame that is not masked.
+	*/
+
+	private function handleIncomingData(int $key, string $data) : void
+	{
+		$received = $this->decode($data);
+		$this->consoleData['lastOpcode'] = $received['opcode'];
+		// received pong
+		if($received['opcode']===10)
+			$this->clientInfoArray[$key][2] = true;
+		// received disconnect
+		if($received['opcode']===8)
+			$this->closeConnection($key);
+		elseif(isset($received['data']))
+			$this->handleMessages($received['data'],$key);
+	}
+
+	private function handleMessages(string $msg, int $key) : void
+	{
+		if($data=$this->jsonValidator($msg)){
+			if(isset($data['mod'])&&$data['mod']==='chat'){
+				if($toCall=$this->checkModuleHook('incoming'))
+					foreach($toCall as $mod)
+						$this->module[$mod]['mod']->incomingData($data,$key);
+			}
+		}else $this->receivedCommand($msg);
+	}
+
+	private function reIndexClientArrays() : void
+	{
+		if($this->consoleData['connectionsIndex']>=100){
+			$this->clientSocketArray = [...$this->clientSocketArray];
+			$this->clientInfoArray = [...$this->clientInfoArray];
+			$this->consoleData['connectionsIndex']=0;
+		}
+	}
+
+	private function handleNewConnection() : bool
+	{
+		if(in_array($this->socketResource,$this->newSocketArray)){
+			$newSocket = socket_accept($this->socketResource);
+			// big test..
+			$this->reIndexClientArrays();
+			$this->clientSocketArray[] = $newSocket;
+			$lastKey = array_key_last($this->clientSocketArray);
+
+			$header = socket_read($newSocket,1024);
+			if($headers = $this->handshake($header,$newSocket,$lastKey)){
+				$this->clientInfoArray[$lastKey] = [time(),$headers['X-Real-IP'],true];
+				$this->countConnections(true);
+
+				if($toCall=$this->checkModuleHook('handshake'))
+					foreach($toCall as $mod)
+						$this->module[$mod]['mod']->handshake($headers,$lastKey);
+
+				$this->console("CONNECT");
+				$this->newSocketArray = [];
+				return true;
+			}else return false;
+		}else return false;
+	}
+
+	private function closeConnection(int $key) : void
+	{
+		$this->countConnections(false);
+		unset($this->clientSocketArray[$key]);
+		unset($this->clientInfoArray[$key]);
+
+		if($toCall=$this->checkModuleHook('close'))
+			foreach($toCall as $mod)
+				$this->module[$mod]['mod']->closeConnection($key);
+
+		$this->console("DISCONNECT");
+	}
+
+	private function checkForClosedConnections(int $key) : void
+	{
+		$socketData = @socket_read($this->clientSocketArray[$key],1024,PHP_NORMAL_READ);
+		if($socketData===false)
+			$this->closeConnection($key);
+	}
+
+	private function pingClients() : void
+	{
+		foreach($this->clientInfoArray as $key => $socket)
+			if($key!==0 && (time()-$this->clientInfoArray[$key][0])>=$this->pingTime){
+				if($this->clientInfoArray[$key][2]){
+					$this->send('Hey',false,$key,'ping');
+					$this->clientInfoArray[$key][0] = time();
+					$this->clientInfoArray[$key][2] = false;
+				}else $this->closeConnection($key);
+			}
+	}
+
+	public function server() : void
+	{
+		$this->clientSocketArray = [$this->socketResource];
+		$this->clientInfoArray = ['system'];
+
+		while($this->loop===1){
+			$this->moduleTimers();
+
+			$this->newSocketArray = $this->clientSocketArray;
+			@socket_select($this->newSocketArray,$null,$null,0,null);
+
+			// handleNewConnection will return a empty newSocketArray..
+			// so the foreach is skipped until there are NO new connections..
+			// oopsy... maybe build in a rate-limit..
+			$this->handleNewConnection();
+
+			foreach($this->newSocketArray as $key => $newSocketArrayResource){
+				while(socket_recv($newSocketArrayResource,$data,1024,0) >= 1){
+					$this->handleIncomingData($key,$data);
+					break 2;
+				}
+				$this->checkForClosedConnections($key);
+			}
+
+			$this->pingClients();
+		}
+	}
+
+	private function END() : void
+	{
+		$this->loop=0;
+		sleep(5);
+		foreach($this->module as $key => $module){
+			if(isset($module['end'])){
+				$call = $module['end'];
+				$this->module[$key]['mod']->$call();
+			}
+		}
+	}
+
+	public function addClientInfo(int $index, string $info, int $lastKey) : void
+	{
+		$this->clientInfoArray[$lastKey][$index]=$info;
+	}
+
+	public function getClientInfoArray() : array
+	{
+		return $this->clientInfoArray;
+	}
+}
+
+class bit64
+{
+	private object $d64;
+	private int $timestamp;
+	private string $btc_euro_rate = '0';
+
+	function __construct($parent)
+	{
+		$this->d64 = $parent;
+
+		$this->timestamp = time();
+	}
+
+	public function BTCtimer(int $seconds) : void
+	{
+		$diff = time()-$this->timestamp;
+		if($diff>=$seconds){
+			$this->d64->moduleTimerLag = ($diff*1000)-($seconds*1000);
+			$this->timestamp = time();
+			$this->get_btc_update();
+		}
+	}
+
+	private function get_btc_update() : bool
+	{
+		$btc = json_decode(file_get_contents('ramdisk/webroot/cache/btc.json'),true);
+		if(is_array($btc) && $btc[3]['rate']!=$this->btc_euro_rate){
+			$this->d64->send('{"mod":"btc","btc_euro":"'.$btc[3]['rate'].'"}',true);
+			$this->btc_euro_rate = $btc[3]['rate'];
+			return true;
+		}else return false;
+	}
+}
+
+class chat64
+{
+	private object $d64;
+	private array $chatData;
+
+	function __construct(object $parent)
+	{
+		$this->d64 = $parent;
+
+		if($chatData = @file_get_contents('socket/chat.json'))
+			$this->chatData = json_decode($chatData,true);
+	}
+
+	public function handshake(array $headers, int $key) : void
+	{
+		if(isset($headers['Cookie']) && $this->isValidNick(str_replace('chat=','',$headers['Cookie']))){
+			if(!$this->isDuplicateNick(str_replace('chat=','',$headers['Cookie'])))
+				$this->d64->addClientInfo(3,str_replace('chat=','',$headers['Cookie']),$key);
+			else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
+		}
+	}
+
+	public function incomingData(array $data, int $key) : void
+	{
+		if(isset($data['rq'])){
+			if($data['rq']==='init' && $data=$this->getChatData(true)){
+				$this->d64->send($data,false,$key);
+				// Send nick data to other users..
+				if(isset($this->d64->getClientInfoArray()[$key][3]))
+                			$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true,0,'text',$key);
+			}elseif($data['rq']==='nick'){
+				if(!$this->isDuplicateNick($data['nick'])){
+					$this->d64->addClientInfo(3,$data['nick'],$key);
+					$this->d64->send(json_encode(['mod'=>'chat','qjb'=>$data['nick']]),false,$key);
+					$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true);
+				}else{
+					$this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
+				}
+			}
+		}elseif(isset($data['cB'])){
+			$this->handleChatData($data['cB'],$key);
+		}elseif(isset($data['nN']) && $this->isValidNick($data['nN'])){
+			if(!$this->isDuplicateNick($data['nN'])){
+				$this->d64->addClientInfo(3,$data['nN'],$key);
+				$this->d64->send(json_encode(['nicks'=>$this->getNicks()]),true,0);
+			}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
+		}
+	}
+
+	public function closeConnection(int $key) : void
+	{
+		if($nicks = $this->getNicks())
+			$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$nicks]),true);
+	}
+
+	public function END() : void
+	{
+		echo "Saving chat file\n";
+		$myfile = fopen("socket/chat.json", "w") or die("Unable to open file!");
+		fwrite($myfile,$this->getChatData(true));
+		fclose($myfile);
+	}
+
+	private function handleChatData(array $data,$key)
+	{
+		if(isset($data['n']) && $data['n']===$this->d64->getClientInfoArray()[$key][3] && $data['m']<=128){
+			if(isset($this->chatData['chat']) && count($this->chatData['chat'])>14)
+				array_shift($this->chatData['chat']);
+			$this->chatData['chat'][] = $data;
+			$this->sendChatData(false);
+		}else $this->closeConnection($key);
+	}
+
+	private function isValidNick(string $nick) : bool
+	{
+		if(preg_match("/^([A-z0-9_-]{3,9})$/",$nick))
+			return true;
+		return false;
+	}
+
+	private function isDuplicateNick(string $nick) : bool
+	{
+		foreach($this->d64->getClientInfoArray() as $row)
+			if(isset($row[3]) && strtolower($row[3])===strtolower($nick))
+				return true;
+		return false;
+	}
+
+        private function getNicks()
+	{
+		foreach($this->d64->getClientInfoArray() as $row)
+			if($row!=='system' && isset($row[3]))
+				$nicks[] = ['n'=>$row[3]];
+		if(isset($nicks[0]))
+			return $nicks;
+		else return false;
+	}
+
+	private function getChatData(bool $all)
+	{
+		if(isset($this->chatData)){
+			$chat = [];
+			if($all){
+				foreach($this->chatData['chat'] as $row)
+					$chat[] = ['n'=>$row['n'],'m'=>htmlentities($row['m'])];
+			}else{
+				$lastRow = end($this->chatData['chat']);
+				$chat[] = ['n'=>$lastRow['n'],'m'=>htmlentities($lastRow['m'])];
+			}
+			$output = ['mod'=>'chat','chat'=>$chat];
+			if($nicks = $this->getNicks())
+				$output['nicks'] = $nicks;
+			return json_encode($output);
+		}else return false;
+	}
+
+	private function sendChatData(bool $all) : void
+	{
+		if(isset($this->chatData))
+			$this->d64->send($this->getChatData($all),true);
+	}
+}
+
+$d64 = new d64();
+$d64->registerModule([
+	'name'	=>	'chat64',
+	'hook'	=>	[
+			'handshake',
+			'incoming',
+			'close'
+			],
+	'end'	=>	'END'
+	]);
+$d64->registerModule([
+	'name'	=>	'bit64',
+	'timer'	=>	[
+			'BTCtimer'	=>	30
+			]
+	]);
+
+$d64->server();
+
+?>

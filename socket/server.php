@@ -448,11 +448,11 @@ class bit64
 		if($diff>=$seconds){
 			$this->d64->moduleTimerLag = ($diff*1000)-($seconds*1000);
 			$this->timestamp = time();
-			$this->get_btc_update();
+			$this->getUpdate();
 		}
 	}
 
-	private function get_btc_update() : bool
+	private function getUpdate() : bool
 	{
 		$btc = json_decode(file_get_contents('ramdisk/webroot/cache/btc.json'),true);
 		if(is_array($btc) && $btc[3]['rate']!=$this->btc_euro_rate){
@@ -526,7 +526,7 @@ class chat64
 		fclose($myfile);
 	}
 
-	private function handleChatData(array $data,$key)
+	private function handleChatData(array $data, int $key) : void
 	{
 		if(isset($data['n']) && $data['n']===$this->d64->getClientInfoArray()[$key][3] && $data['m']<=128){
 			if(isset($this->chatData['chat']) && count($this->chatData['chat'])>14)

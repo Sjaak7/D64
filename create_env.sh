@@ -145,7 +145,7 @@ sudo docker run \
         -w /usr/src/myapp \
 	-d \
         socket \
-        php socket/server.php
+        php socket/d64server.php
 
 #####
 # Nginx container

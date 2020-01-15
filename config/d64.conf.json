@@ -1,0 +1,26 @@
+{
+"root":{
+	"url":"https://d64.nl",
+	"nav":{
+		"name":"D64",
+		"enable":"yes"
+	},
+	"title":"D64.nl - PWA framework"
+},
+"blog":{
+	"class":"d64-blog",
+	"data":"real",
+	"path":"/blog/",
+	"always":1,
+	"title":"D64.nl Blog",
+	"nav":{
+		"name":"blog",
+		"enable":"yes"
+	}
+},
+"offline":{
+	"data":"virtual",
+	"path":"/offline/",
+	"title":"Offline"
+}
+}

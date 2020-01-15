@@ -1,0 +1,9 @@
+Gerda
+
+Websocket chat alfa :)
+
+Korte inleiding word nog niet gebruikt.
+
+Na 10 jaar bijna geen computer te hebben aangeraakt ben ik aan het zoeken naar de mogelijkheden van tegenwoordig. Ik heb een kleine client/server chat omgeving gemaakt. De communicatie gaat over websocket waardoor alles realtime lijkt.. Ik vind het leuk om uit te vogelen hoever je kunt gaan. De backend oftewel achterkant loopt via een Nginx proxie naar een zelf geschreven PHP-Cli applicatie. Ik zat er over te denken om deze in C++ te schrijven maar aangezien PHP v8 eraan komt met JIT mogelijkheden leek het mij interessant om het zo te doen.
+
+Op internet kan je talloze voorbeelden vinden van PHP websocket servers maar die zijn allemaal erg simpel en wat is er leuker dan zelf uitzoeken en verbeteren? De hele omgeving draait in Docker containers en kunnen dus relatief simpel opgeschaald worden al moet daar nog flink wat tijd ingestoken worden! Links zie je een grote Youtube play button want misschien ga ik wel live.

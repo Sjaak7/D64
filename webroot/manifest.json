@@ -1,0 +1,13 @@
+{
+"name":"D64.nl",
+"short_name":"D64",
+"icons":[{
+ "src":"/img/icons/d64-512.png",
+  "sizes":"512x512",
+    "type":"image/png"
+}],
+"start_url":"/",
+"display":"standalone",
+"background_color":"#009688",
+"theme_color":"#616161"
+}

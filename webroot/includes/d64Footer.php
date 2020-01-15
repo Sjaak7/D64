@@ -13,7 +13,7 @@ class d64Footer{
   {
     return '<div class="w3-container w3-teal">'.
            '<p class="w3-center w3-small">'.
-             '(c) 2020'.
+             '(c) 2020, source: <a href="https://github.com/Sjaak7/d64">Github.com/Sjaak7/d64</a>'.
            '</p>'.
            '</div>'.
            '</body>'.

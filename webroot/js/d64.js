@@ -128,7 +128,7 @@ function gC(cname){
 // Init chat
 function iC(){
 	if(gC("chat")==="")
-		cI.placeholder="Type hier je nicknaam.."
+		cI.placeholder="Type eerst je nicknaam.."
 	else if(!cN(gC("chat"))){
 		cI.placeholder="Geen geldige nicknaam"
 	}else if(gC("chat").length<3){

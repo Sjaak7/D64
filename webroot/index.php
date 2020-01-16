@@ -18,6 +18,12 @@ $d64->header->set_description("Test website van Gerda");
 
 // Check if we are on the frontpage without any jokes like querystrings.. holla hop
 if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
+
+	$bitpay = json_decode(file_get_contents(ROOTPATH.'/cache/btc.json'),true);
+	if(is_array($bitpay))
+		$bitprice = $bitpay[3]['rate'];
+	else $bitprice = 'NaN';
+
 	$leftPanel =
 		'<div class="w3-quarter w3-green w3-padding">'.
 			'<div>'.
@@ -52,11 +58,6 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 }
 
 $d64->init();
-
-$bitpay = json_decode(file_get_contents(ROOTPATH.'/cache/btc.json'),true);
-if(is_array($bitpay)){
-  $bitprice = $bitpay[3]['rate'];
-}else $bitprice = 'NaN';
 
 $d64->header->set_script('<script src="/js/d64.js"></script>');
 

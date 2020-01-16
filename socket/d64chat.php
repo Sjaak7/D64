@@ -68,7 +68,7 @@ class chat64
 		if(isset($data['n']) && $data['n']===$this->d64->getClientInfoArray()[$key][3] && $data['m']<=128){
 			if(isset($this->chatData['chat']) && count($this->chatData['chat'])>14)
 				array_shift($this->chatData['chat']);
-			$this->chatData['chat'][] = $data;
+			$this->chatData['chat'][] = ['n'=>$data['n'],'m'=>htmlentities($data[m])];
 			$this->sendChatData(false);
 		}else $this->closeConnection($key);
 	}
@@ -104,10 +104,10 @@ class chat64
 			$chat = [];
 			if($all){
 				foreach($this->chatData['chat'] as $row)
-					$chat[] = ['n'=>$row['n'],'m'=>htmlentities($row['m'])];
+					$chat[] = ['n'=>$row['n'],'m'=>$row['m']];
 			}else{
 				$lastRow = end($this->chatData['chat']);
-				$chat[] = ['n'=>$lastRow['n'],'m'=>htmlentities($lastRow['m'])];
+				$chat[] = ['n'=>$lastRow['n'],'m'=>$lastRow['m']];
 			}
 			$output = ['mod'=>'chat','chat'=>$chat];
 			if($nicks = $this->getNicks())

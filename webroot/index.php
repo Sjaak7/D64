@@ -11,8 +11,8 @@ define('URL','https://d64.nl');
 include('./includes/d64.php');
 
 $d64 = new d64();
-$d64->header = new d64Header($d64);
-$d64->footer = new d64Footer($d64);
+$d64->header = new d64header($d64);
+$d64->footer = new d64footer($d64);
 
 $d64->header->set_description("Test website van Gerda");
 

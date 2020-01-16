@@ -1,4 +1,4 @@
-d64
+D64
 
 Een klein framewerk voor self-learning.
 

@@ -206,6 +206,12 @@ http{
 			access_log off;
 		}
 
+		location /manifest.json {
+			access_log off;
+			expires 5d;
+			add_header Cache-Control "public";
+		}
+
 		location /js/d64.js {
 			access_log off;
 			expires 1d;

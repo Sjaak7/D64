@@ -172,26 +172,34 @@ http{
 		}
 
 		location /service-worker.js {
-		add_header Cache-Control "public, max-age=3600, s-maxage=3600";
+			expires 1h;
+			add_header Cache-Control "public";
 		#	add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
 		#	if_modified_since off;
 		#	expires off;
 		}
 
-		location /includes {
+		location /includes/ {
 			rewrite ^ /index.php?404;
 		}
 
-		location /js {
+		location /img/ {
+			expires 5d;
+			add_header Cache-Control "public";
+		}
+
+		location /js/ {
 			rewrite ^ /index.php?404;
 		}
 
-                location /css {
+                location /css/ {
                         rewrite ^ /index.php?404;
                 }
 
 		location /favicon.ico {
 			access_log off;
+			expires 10d;
+			add_header Cache-Control "public";
 		}
 
 		location /robots.txt {
@@ -200,6 +208,8 @@ http{
 
 		location /js/d64.js {
 			access_log off;
+			expires 1d;
+			add_header Cache-Control "public";
 		}
 
                 location /css/w3.css {

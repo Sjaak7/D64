@@ -24,6 +24,7 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 		$bitprice = $bitpay[3]['rate'];
 	else $bitprice = 'NaN';
 
+	$contentClass = 'w3-threequarter ';
 	$leftPanel =
 		'<div class="w3-quarter w3-green w3-padding">'.
 			'<div>'.
@@ -37,6 +38,7 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 				'<img src="/img/live.png" class="w3-image" alt="Youtube live, play knop" id="ytvi">'.
 			'</div>'.
 		'</div>'.
+
 	$d64->set_content(
 		'<h2>Welkom</h2>'.
 		'<p>Dit is een test project van Gerda. Gerda (m) is een eenzame sysop.. je kunt hem gerust een berichtje sturen maar houd het wel netjes ajb. P.S. ik ben niet zo goed met kleuren.</p>'.
@@ -48,12 +50,14 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 		'</div>'
 	);
 }elseif($d64->path[0]==='offline'){
+	$contentClass = '';
 	$leftPanel = '';
 	$d64->set_content(
 		'<h2>Geen verbinding</h2>'.
 		'<p>Je hebt geen verbinding met internet. Ik probeer het opnieuw als de verbinding hersteld is.</p>'
 	);
 }else{
+	$contentClass = '';
 	$leftPanel = '';
 }
 
@@ -64,7 +68,7 @@ $d64->header->set_script('<script src="/js/d64.js"></script>');
 echo $d64->header->make_header().
      '<div class="w3-row">'.
 	$leftPanel.
-       '<div class="w3-threequarter w3-dark-grey w3-padding">'.
+       '<div class="'.$contentClass.'w3-dark-grey w3-padding">'.
          $d64->get_content().
        '</div>'.
      '</div>'.

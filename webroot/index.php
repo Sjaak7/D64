@@ -24,15 +24,21 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 		$bitprice = $bitpay[3]['rate'];
 	else $bitprice = 'NaN';
 
-	$d64->set_content(
+	$d64->setContent(
 		'<h1>Lobby:</h1>'.
 		'<div id="cFrame">'.
 			'<div id="cB"></div>'.
 			'<div class="w3-margin-top w3-small" id="cN"></div>'.
 		'</div>'
 	);
+	$d64->footer->setFooter(
+		'<div id="cIForm">'.
+			'<textarea id="cI" maxlength="9" wrap="soft"></textarea>'.
+			'<div><input type="checkbox" class="w3-check" id="btc" value="1"> <label for="btc">BTC updates (werkt nog niet)</label></div>'.
+		'</div>'
+	);
 }elseif($d64->path[0]==='offline'){
-	$d64->set_content(
+	$d64->setContent(
 		'<h2>Geen verbinding</h2>'.
 		'<p>Je hebt geen verbinding met internet. Ik probeer het opnieuw als de verbinding hersteld is.</p>'
 	);
@@ -42,10 +48,10 @@ $d64->init();
 
 $d64->header->set_script('<script src="/js/d64.js"></script>');
 
-echo $d64->header->make_header().
+echo $d64->header->makeHeader().
      '<div class="container" id="content">'.
-         $d64->get_content().
+         $d64->getContent().
      '</div>'.
-     $d64->footer->make_footer();
+     $d64->footer->makeFooter();
 
 ?>

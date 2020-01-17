@@ -164,8 +164,7 @@ function chatConnStatus(){
 }
 document.addEventListener("DOMContentLoaded",function(){
 	window.addEventListener("resize",scrollDown);
-	document.getElementById("footer").innerHTML='<textarea id="cI" rows="1" maxlength="9"></textarea>';
-scrollDown();
+	scrollDown();
 	cI=document.getElementById("cI");
 	if(cI!==null){
 		// init
@@ -177,6 +176,7 @@ scrollDown();
 			if(e.keyCode===13&&cI.value!==""){
 				// Set the nickname
 				if(gC("chat")===""){
+					// Remove line breaks
 					cI.value=cI.value.replace(/(\r\n|\n|\r)/gm,"");
 					if(!checkNick(cI.value)){
 						cI.value="";
@@ -194,7 +194,7 @@ scrollDown();
 						cI.value="";
 						cI.placeholder="Nicknaam controleren..";
 					}
-				}else if(checkNick(gC("chat"))&&gC("chat").length>=3){
+				}else if(checkNick(gC("chat"))&&gC("chat").length>=3&&cI.value.trim().length>0){
 					S.send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:cI.value}}));
 					cI.value=""
 				}

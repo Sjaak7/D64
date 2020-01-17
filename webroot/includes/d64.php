@@ -51,12 +51,12 @@ class d64 {
     $this->title = $title;
   }
 
-  public function set_content(string $content) : void
+  public function setContent(string $content) : void
   {
     $this->content = $content;
   }
 
-  public function get_content() : string
+  public function getContent() : string
   {
     if(empty($this->content))
       $this->content = "Nothing to display";

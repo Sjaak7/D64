@@ -219,9 +219,9 @@ http{
 		}
 
                 location /css/w3.css {
-			expires 2d;
+#			expires 2d;
                         access_log off;
-			add_header Cache-Control "public";
+#			add_header Cache-Control "public";
                 }
 
 		location ~ "^\/blog" {

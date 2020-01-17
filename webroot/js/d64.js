@@ -45,10 +45,10 @@ function chatParser(){
 			C=o;
 			printChat();
 		}else chatStack(o.chat[0]);
-
-		if(o.nicks!==undefined)
-			onlineNicks(o.nicks);
-	}else if(o.qjb!==undefined&&o.qjb===tN){
+	}
+	if(o.nicks!==undefined)
+		onlineNicks(o.nicks);
+	else if(o.qjb!==undefined&&o.qjb===tN){
 		SC("chat",tN,100);
 		cI.value="";
 		cI.setAttribute("maxlength",128);
@@ -61,9 +61,12 @@ function chatParser(){
 }
 function onlineNicks(n){
 	var output="";
-	for(i in n)
-		output+="<span>"+n[i]["n"]+"</span>, ";
-	document.getElementById("cN").innerHTML="Online chatters: "+output.substring(0,output.length-2);
+	if(n!=="none"){
+		for(i in n)
+			output+="<span>"+n[i]["n"]+"</span>, ";
+		document.getElementById("cN").innerHTML="Online chatters: "+output.substring(0,output.length-2);
+	}else document.getElementById("cN").innerHTML="";
+	scrollDown();
 }
 function chatStack(m){
 	if(C.chat.length===30)

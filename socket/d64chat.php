@@ -53,6 +53,7 @@ class chat64
 	{
 		if($nicks = $this->getNicks())
 			$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$nicks]),true);
+		else $this->d64->send(json_encode(['mod'=>'chat','nicks'=>'none']),true);
 	}
 
 	public function END() : void

@@ -1,6 +1,6 @@
 var d64=(function(){
 // C = chat, S = socket, cI = chat input, tN = temp nick
-var C,S,o,hidden,visibilityChange,cI,tN;
+var C,S,o,hidden,visibilityChange,cI,tN,btcChat=true;
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
@@ -45,26 +45,33 @@ function onlineNicks(n){
 		output+="<span>"+n[i]["n"]+"</span>, ";
 	document.getElementById("cN").innerHTML="Online chatters: "+output.substring(0,output.length-2);
 }
+function chatStack(m){
+	if(C.chat.length===30)
+		C.chat.shift();
+	C.chat.push(m);
+}
+function printChat(){
+	var i,x='';
+	for(i in C.chat)
+		x+="<div>"+C.chat[i]["n"]+": "+C.chat[i]["m"]+"</div>";
+	document.getElementById("cB").innerHTML=x;
+}
 // Validate
 function v(d){
 	try{
-		var i,x="",n="";
+		var n="";
 		o=JSON.parse(d);
-		if(o.mod!==undefined&&o.mod==="btc"){
-			//document.getElementById("btc_euro").innerHTML=o.btc_euro;
+		if(o.mod!==undefined&&o.mod==="btc"&&btcChat===true){
+			chatStack({"n":"btc-bot","m":o.btc_euro});
+			printChat();
 		}else if(o.mod!==undefined&&o.mod==="chat"){
 			if(o.chat!==undefined){
 				if(C===undefined||o.chat.length>1)
 					C=o;
 				else{
-					if(C.chat.length===30)
-						C.chat.shift();
-
-					C.chat.push(o.chat[0]);
+					chatStack(o.chat[0]);
 				}
-				for(i in C.chat)
-					x+="<div>"+C.chat[i]["n"]+": "+C.chat[i]["m"]+"</div>";
-				document.getElementById("cB").innerHTML=x;
+				printChat();
 				if(o.nicks!==undefined)
 					onlineNicks(o.nicks);
 			}else if(o.qjb!==undefined&&o.qjb===tN){
@@ -163,8 +170,15 @@ function chatConnStatus(){
 	}
 }
 document.addEventListener("DOMContentLoaded",function(){
-	window.addEventListener("resize",scrollDown);
 	scrollDown();
+	window.addEventListener("resize",scrollDown);
+	document.getElementById("btc").addEventListener("change",function(){
+		if(this.checked){
+			btcChat=true;
+		}else{
+			btcChat=false;
+		}
+	});
 	cI=document.getElementById("cI");
 	if(cI!==null){
 		// init

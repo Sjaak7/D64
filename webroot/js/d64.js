@@ -50,16 +50,17 @@ function v(d){
 	try{
 		var i,x="",n="";
 		o=JSON.parse(d);
-		if(o.mod!==undefined&&o.mod==="btc")
-			document.getElementById("btc_euro").innerHTML=o.btc_euro;
-		else if(o.mod!==undefined&&o.mod==="chat"){
+		if(o.mod!==undefined&&o.mod==="btc"){
+			//document.getElementById("btc_euro").innerHTML=o.btc_euro;
+		}else if(o.mod!==undefined&&o.mod==="chat"){
 			if(o.chat!==undefined){
 				if(C===undefined||o.chat.length>1)
 					C=o;
 				else{
-					if(C.chat.length===15)
+					if(C.chat.length===30)
 						C.chat.shift();
-					C.chat.push(o.chat[0])
+
+					C.chat.push(o.chat[0]);
 				}
 				for(i in C.chat)
 					x+="<div>"+C.chat[i]["n"]+": "+C.chat[i]["m"]+"</div>";
@@ -74,14 +75,20 @@ function v(d){
 			}else if(o.err!==undefined&&o.err==="dup_nick"){
 				cI.value="";
 				cI.placeholder="Deze nicknaam bestaat al, kies een andere..";
+				document.cookie = "chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 			}
 		}
 		if(o.chat===undefined&&o.nicks!==undefined)
 			onlineNicks(o.nicks);
-		sC("life","green")
+		sC("life","green");
 	}catch(e){
 		l(e);
 	}
+	scrollDown();
+}
+function scrollDown(){
+	content=document.getElementById("content");
+	window.scrollTo(0,content.scrollHeight);
 }
 // set color
 function sC(i,c){
@@ -129,7 +136,7 @@ function gC(cname){
 function iC(){
 	if(gC("chat")==="")
 		cI.placeholder="Type eerst je nicknaam.."
-	else if(!cN(gC("chat"))){
+	else if(!checkNick(gC("chat"))){
 		cI.placeholder="Geen geldige nicknaam"
 	}else if(gC("chat").length<3){
 		//
@@ -141,7 +148,7 @@ function iC(){
 	}
 }
 // check nick
-function cN(n){
+function checkNick(n){
 	if(n.match(/^([A-z0-9_-]{1,9})$/g)===null)
 		return false;
 	else return true
@@ -156,7 +163,10 @@ function chatConnStatus(){
 	}
 }
 document.addEventListener("DOMContentLoaded",function(){
-	cI=document.getElementById("c");
+	window.addEventListener("resize",scrollDown);
+	document.getElementById("footer").innerHTML='<textarea id="cI" rows="1" maxlength="9"></textarea>';
+scrollDown();
+	cI=document.getElementById("cI");
 	if(cI!==null){
 		// init
 		iC();
@@ -167,7 +177,8 @@ document.addEventListener("DOMContentLoaded",function(){
 			if(e.keyCode===13&&cI.value!==""){
 				// Set the nickname
 				if(gC("chat")===""){
-					if(!cN(cI.value)){
+					cI.value=cI.value.replace(/(\r\n|\n|\r)/gm,"");
+					if(!checkNick(cI.value)){
 						cI.value="";
 						cI.placeholder="Nicknaam mag alleen letters en cijfers bevatten"
 					}else if(cI.value.length<3){
@@ -183,18 +194,18 @@ document.addEventListener("DOMContentLoaded",function(){
 						cI.value="";
 						cI.placeholder="Nicknaam controleren..";
 					}
-				}else if(cN(gC("chat"))&&gC("chat").length>=3){
+				}else if(checkNick(gC("chat"))&&gC("chat").length>=3){
 					S.send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:cI.value}}));
 					cI.value=""
 				}
 			}
 		})
 	}
-	document.getElementById("ytvi").addEventListener("click",function(){
-		document.getElementById("ytvi").remove();
-		document.getElementById("ytp").classList.add("yt");
-		document.getElementById("ytp").innerHTML='<iframe class="ytv" src="https://www.youtube-nocookie.com/embed/VeVjEg4znQk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
-	});
+//	document.getElementById("ytvi").addEventListener("click",function(){
+//		document.getElementById("ytvi").remove();
+//		document.getElementById("ytp").classList.add("yt");
+//		document.getElementById("ytp").innerHTML='<iframe class="ytv" src="https://www.youtube-nocookie.com/embed/VeVjEg4znQk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+//	});
 	if('serviceWorker' in navigator){
 		navigator.serviceWorker.register('/service-worker.js',{scope:'/'})
 		.then((r)=>{

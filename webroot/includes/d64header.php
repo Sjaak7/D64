@@ -43,9 +43,9 @@ class d64Header{
 		$this->script.
 		'</head>'.
 		'<body>'.
-		'<div class="w3-bar w3-black">'.
+		'<div class="w3-bar w3-top w3-black" id="nav">'.
 			$this->nav.
-			'<span class="w3-bar-item w3-right" id="life">&#9679;</span>'.
+			'<span class="w3-bar-item" id="life">&#9679;</span>'.
 		'</div>';
   }
 

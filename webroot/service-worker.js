@@ -1,41 +1,38 @@
-var 	cacheName = 'shell-content-v1',
-	filesToCache = [
-		'/manifest.json',
-		'/favicon.ico',
-		'/css/w3.css',
-		'/js/d64.js',
-		'/img/live.png',
+var CACHE = 'cache-and-update';
 
-		'/offline/',
-		'/',
-	];
-self.addEventListener('install',(e)=>{
-	console.log('[ServiceWorker] Install');
-	e.waitUntil(
-		caches.open(cacheName).then((cache)=>{
-			console.log('[ServiceWorker] Caching app shell');
-			return cache.addAll(filesToCache);
-		})
-	);
+self.addEventListener('install', function(evt) {
+	console.log('The service worker is being installed.');
+	evt.waitUntil(precache());
 });
-self.addEventListener('activate',(e)=>{
-	e.waitUntil(
-		caches.keys().then((keyList)=>{
-			return Promise.all(keyList.map((key)=>{
-				if(key!==cacheName){
-					console.log('[ServiceWorker] Removing old cache',key);
-					return caches.delete(key);
-				}
-			}));
-		})
-	);
+self.addEventListener('fetch', function(evt) {
+	console.log('The service worker is serving the asset.');
+	evt.waitUntil(update(evt.request));
 });
-self.addEventListener('fetch',(e)=>{
-	e.respondWith(
-		caches.match(e.request).then((response)=>{
-			return response || fetch(e.request);
-		}).catch(()=>{
-			return caches.match('/offline/');
-		})
-	);
-});
+function precache() {
+	return caches.open(CACHE).then(function (cache) {
+	return cache.addAll([
+			'/manifest.json',
+			'/favicon.ico',
+			'/css/w3.css',
+			'/js/d64.js',
+			'/img/live.png',
+			'/offline/',
+			'/'
+		]);
+	});
+}
+function fromCache(request) {
+	return caches.open(CACHE).then(function (cache) {
+		return cache.match(request).then(function (matching) {
+			return matching || Promise.reject('no-match');
+		});
+	});
+}
+
+function update(request) {
+	return caches.open(CACHE).then(function (cache) {
+		return fetch(request).then(function (response) {
+			return cache.put(request, response);
+		});
+	});
+}

@@ -66,7 +66,7 @@ class chat64
 	private function handleChatData(array $data, int $key) : void
 	{
 		if(isset($data['n']) && $data['n']===$this->d64->getClientInfoArray()[$key][3] && $data['m']<=128){
-			if(isset($this->chatData['chat']) && count($this->chatData['chat'])>14)
+			if(isset($this->chatData['chat']) && count($this->chatData['chat'])>29)
 				array_shift($this->chatData['chat']);
 			$this->chatData['chat'][] = ['n'=>$data['n'],'m'=>htmlentities($data[m])];
 			$this->sendChatData(false);

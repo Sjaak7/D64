@@ -25,14 +25,14 @@ class d64Blog{
             $this->d64->not_found();
           }
         }elseif(preg_match('/^\/blog\/\d{4}\/\d{1,2}\/\d{1,2}\/.[^.]*$/',$this->d64->get_parsed_url()['path'])){
-          $this->d64->set_content($this->nieuwsformatter($this->d64));
+          $this->d64->setContent($this->nieuwsformatter($this->d64));
         }
       }else{
         if(is_file(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php')){
           $this->d64->set_title("Blog");
           ob_start();
           include(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php');
-          $this->d64->set_content(str_replace("\n","",ob_get_contents()));
+          $this->d64->setContent(str_replace("\n","",ob_get_contents()));
           ob_end_clean();
         }else{
           $this->d64->not_found();

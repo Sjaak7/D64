@@ -39,6 +39,26 @@ function s(m){
 	sC("life","blue");
 	S.send(m)
 }
+function chatParser(){
+	if(o.chat!==undefined){
+		if(C===undefined||o.chat.length>1){
+			C=o;
+			printChat();
+		}else chatStack(o.chat[0]);
+
+		if(o.nicks!==undefined)
+			onlineNicks(o.nicks);
+	}else if(o.qjb!==undefined&&o.qjb===tN){
+		SC("chat",tN,100);
+		cI.value="";
+		cI.setAttribute("maxlength",128);
+		cI.placeholder="Hoi "+gC("chat")+", type hier je bericht";
+	}else if(o.err!==undefined&&o.err==="dup_nick"){
+		cI.value="";
+		cI.placeholder="Deze nicknaam bestaat al, kies een andere..";
+		document.cookie = "chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+	}
+}
 function onlineNicks(n){
 	var output="";
 	for(i in n)
@@ -49,49 +69,27 @@ function chatStack(m){
 	if(C.chat.length===30)
 		C.chat.shift();
 	C.chat.push(m);
+	printChat();
 }
 function printChat(){
 	var i,x='';
 	for(i in C.chat)
 		x+="<div>"+C.chat[i]["n"]+": "+C.chat[i]["m"]+"</div>";
 	document.getElementById("cB").innerHTML=x;
+	scrollDown();
 }
 // Validate
 function v(d){
 	try{
-		var n="";
 		o=JSON.parse(d);
-		if(o.mod!==undefined&&o.mod==="btc"&&btcChat===true){
-			chatStack({"n":"btc-bot","m":o.btc_euro});
-			printChat();
-		}else if(o.mod!==undefined&&o.mod==="chat"){
-			if(o.chat!==undefined){
-				if(C===undefined||o.chat.length>1)
-					C=o;
-				else{
-					chatStack(o.chat[0]);
-				}
-				printChat();
-				if(o.nicks!==undefined)
-					onlineNicks(o.nicks);
-			}else if(o.qjb!==undefined&&o.qjb===tN){
-				SC("chat",tN,100);
-				cI.value="";
-				cI.setAttribute("maxlength",128);
-				cI.placeholder="Hoi "+gC("chat")+", type hier je bericht";
-			}else if(o.err!==undefined&&o.err==="dup_nick"){
-				cI.value="";
-				cI.placeholder="Deze nicknaam bestaat al, kies een andere..";
-				document.cookie = "chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-			}
-		}
-		if(o.chat===undefined&&o.nicks!==undefined)
-			onlineNicks(o.nicks);
+		if(o.mod!==undefined&&o.mod==="btc"&&btcChat===true)
+			chatStack({"n":"btc-bot","m":"&euro; "+o.btc_euro});
+		else if(o.mod!==undefined&&o.mod==="chat")
+			chatParser();
 		sC("life","green");
 	}catch(e){
 		l(e);
 	}
-	scrollDown();
 }
 function scrollDown(){
 	content=document.getElementById("content");
@@ -170,14 +168,12 @@ function chatConnStatus(){
 	}
 }
 document.addEventListener("DOMContentLoaded",function(){
-	scrollDown();
+//	scrollDown();
 	window.addEventListener("resize",scrollDown);
-	document.getElementById("btc").addEventListener("change",function(){
-		if(this.checked){
+	document.getElementById("btc").addEventListener("change",()=>{
+		if(this.checked)
 			btcChat=true;
-		}else{
-			btcChat=false;
-		}
+		else btcChat=false;
 	});
 	cI=document.getElementById("cI");
 	if(cI!==null){
@@ -209,7 +205,7 @@ document.addEventListener("DOMContentLoaded",function(){
 						cI.placeholder="Nicknaam controleren..";
 					}
 				}else if(checkNick(gC("chat"))&&gC("chat").length>=3&&cI.value.trim().length>0){
-					S.send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:cI.value}}));
+					S.send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:cI.value.replace(/(\r\n|\n|\r)/gm,"")}}));
 					cI.value=""
 				}
 			}

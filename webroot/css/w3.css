@@ -155,6 +155,9 @@ body{
 	height:5vh;
 	min-height:40px;
 }
+#nav a{
+	text-transform:capitalize;
+}
 #life{
 	color:red;
 }
@@ -164,6 +167,7 @@ body{
 	height:calc(95vh+156px);
 	overflow-y:scroll;
 	color:#fff;
+	padding-left:0.5rem;
 }
 #footer{
 	height:100px;

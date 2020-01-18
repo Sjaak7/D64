@@ -11,7 +11,7 @@ function wss(){
 					S.send(JSON.stringify({mod:"chat",rq:"init"}));
 			}
 			if(cI!==null)
-				iC();
+				initChat();
 		};
 		S.onerror=e=>{
 		};
@@ -40,24 +40,26 @@ function s(m){
 	S.send(m)
 }
 function chatParser(){
-	if(o.chat!==undefined){
-		if(C===undefined||o.chat.length>1){
+	if(typeof(o.chat)!=="undefined"){
+		if(typeof(C)==="undefined"||o.chat.length>1){
 			C=o;
 			printChat();
 		}else chatStack(o.chat[0]);
 	}
-	if(o.nicks!==undefined)
+	if(typeof(o.nicks)!=="undefined")
 		onlineNicks(o.nicks);
-	else if(o.qjb!==undefined&&o.qjb===tN){
+	else if(typeof(o.qjb)!=="undefined"&&o.qjb===tN){
 		SC("chat",tN,100);
-		cI.value="";
 		cI.setAttribute("maxlength",128);
-		cI.placeholder="Hoi "+gC("chat")+", type hier je bericht";
-	}else if(o.err!==undefined&&o.err==="dup_nick"){
-		cI.value="";
-		cI.placeholder="Deze nicknaam bestaat al, kies een andere..";
+		chatPlaceholder("Hoi "+gC("chat")+", type hier je bericht");
+	}else if(typeof(o.err)!=="undefined"&&o.err==="dup_nick"){
+		chatPlaceholder("Deze nicknaam bestaat al, kies een andere..");
 		document.cookie = "chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 	}
+}
+function chatPlaceholder(p){
+	cI.placeholder=p;
+	cI.value="";
 }
 function onlineNicks(n){
 	var output="";
@@ -85,9 +87,9 @@ function printChat(){
 function v(d){
 	try{
 		o=JSON.parse(d);
-		if(o.mod!==undefined&&o.mod==="btc"&&btcChat===true)
+		if(typeof(o.mod)!=="undefined"&&o.mod==="btc"&&btcChat===true)
 			chatStack({"n":"btc-bot","m":"&euro; "+o.btc_euro});
-		else if(o.mod!==undefined&&o.mod==="chat")
+		else if(typeof(o.mod)!=="undefined"&&o.mod==="chat")
 			chatParser();
 		sC("life","green");
 	}catch(e){
@@ -103,13 +105,13 @@ function sC(i,c){
 	document.getElementById(i).style.color=c
 }
 // visibility
-if(typeof document.hidden!=="undefined"){
+if(typeof(document.hidden)!=="undefined"){
 	hidden="hidden";
 	visibilityChange="visibilitychange"
-}else if(typeof document.msHidden!=="undefined"){
+}else if(typeof(document.msHidden)!=="undefined"){
 	hidden="msHidden";
 	visibilityChange="msvisibilitychange"
-}else if(typeof document.webkitHidden!=="undefined"){
+}else if(typeof(document.webkitHidden)!=="undefined"){
 	hidden="webkitHidden";
 	visibilityChange="webkitvisibilitychange"
 }
@@ -119,7 +121,7 @@ function handleVisibilityChange(){
 		S.close()
 	}else wss()
 }
-if(typeof document.addEventListener!=="undefined"||hidden===undefined)
+if(typeof(document.addEventListener)!=="undefined"||hidden===undefined)
 	document.addEventListener(visibilityChange,handleVisibilityChange,false);
 // setCookie
 function SC(cn,cv,exd){
@@ -140,19 +142,18 @@ function gC(cname){
 	}
 	return "";
 }
-// Init chat
-function iC(){
+function initChat(){
 	if(gC("chat")==="")
-		cI.placeholder="Type eerst je nicknaam.."
+		chatPlaceholder("Type eerst je nicknaam..");
 	else if(!checkNick(gC("chat"))){
-		cI.placeholder="Geen geldige nicknaam"
+		chatPlaceholder("Geen geldige nicknaam");
 	}else if(gC("chat").length<3){
 		//
 	}else if(gC("chat").length>9){
 		//
 	}else{
 		cI.setAttribute("maxlength",128);
-		cI.placeholder="Hoi "+gC("chat")+", type hier je bericht"
+		chatPlaceholder("Hoi "+gC("chat")+", type hier je bericht");
 	}
 }
 // check nick
@@ -165,13 +166,12 @@ function checkNick(n){
 function chatConnStatus(){
 	if(cI!==null){
 		if(S.readyState===S.CLOSED)
-			cI.placeholder="Verbinding verbroken :( ik probeer opnieuw..";
+			chatPlaceholder("Verbinding verbroken :( ik probeer opnieuw..");
 		else if(S.readyState===S.OPEN)
-			iC();
+			initChat();
 	}
 }
-document.addEventListener("DOMContentLoaded",function(){
-//	scrollDown();
+document.addEventListener("DOMContentLoaded",()=>{
 	window.addEventListener("resize",scrollDown);
 	document.getElementById("btc").addEventListener("change",()=>{
 		if(this.checked)
@@ -181,31 +181,27 @@ document.addEventListener("DOMContentLoaded",function(){
 	cI=document.getElementById("cI");
 	if(cI!==null){
 		// init
-		iC();
+		initChat();
 		/*
 		* Wait for the ENTER (13) key
 		*/
-		cI.addEventListener("keyup",function(e){
+		cI.addEventListener("keyup",(e)=>{
 			if(e.keyCode===13&&cI.value!==""){
 				// Set the nickname
 				if(gC("chat")===""){
 					// Remove line breaks
 					cI.value=cI.value.replace(/(\r\n|\n|\r)/gm,"");
-					if(!checkNick(cI.value)){
-						cI.value="";
-						cI.placeholder="Nicknaam mag alleen letters en cijfers bevatten"
-					}else if(cI.value.length<3){
-						cI.value="";
-						cI.placeholder="Nicknaam moet minimaal 3 karakters zijn"
+					if(!checkNick(cI.value))
+						chatPlaceholder("Nicknaam mag alleen letters en cijfers bevatten");
+					else if(cI.value.length<3){
+						chatPlaceholder("Nicknaam moet minimaal 3 karakters zijn");
 					}else if(cI.value.length>9){
-						cI.value="";
-						cI.placeholder="Nicknaam mag maximaal 9 karakters zijn"
+						chatPlaceholder("Nicknaam mag maximaal 9 karakters zijn");
 					}else{
 						// request nick
 						tN=cI.value;
 						S.send(JSON.stringify({mod:"chat",rq:"nick",nick:tN}));
-						cI.value="";
-						cI.placeholder="Nicknaam controleren..";
+						chatPlaceholder("Nicknaam controleren..");
 					}
 				}else if(checkNick(gC("chat"))&&gC("chat").length>=3&&cI.value.trim().length>0){
 					S.send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:cI.value.replace(/(\r\n|\n|\r)/gm,"")}}));
@@ -214,11 +210,6 @@ document.addEventListener("DOMContentLoaded",function(){
 			}
 		})
 	}
-//	document.getElementById("ytvi").addEventListener("click",function(){
-//		document.getElementById("ytvi").remove();
-//		document.getElementById("ytp").classList.add("yt");
-//		document.getElementById("ytp").innerHTML='<iframe class="ytv" src="https://www.youtube-nocookie.com/embed/VeVjEg4znQk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
-//	});
 	if('serviceWorker' in navigator){
 		navigator.serviceWorker.register('/service-worker.js',{scope:'/'})
 		.then((r)=>{

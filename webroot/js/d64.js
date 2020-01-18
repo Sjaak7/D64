@@ -40,15 +40,14 @@ function chatParser(){
 	if(typeof(o.chat)!=="undefined"){
 		if(typeof(C)==="undefined"||o.chat.length>1){
 			C=o;
-			printChat();
+			chatPrint();
 		}else chatStack(o.chat[0]);
 	}
 	if(typeof(o.nicks)!=="undefined")
 		onlineNicks(o.nicks);
 	else if(typeof(o.qjb)!=="undefined"&&o.qjb===tN){
 		SC("chat",tN,100);
-		cI.setAttribute("maxlength",128);
-		chatPlaceholder("Hoi "+gC("chat")+", type hier je bericht");
+		changeToInput();
 	}else if(typeof(o.err)!=="undefined"&&o.err==="dup_nick"){
 		chatPlaceholder("Deze nicknaam bestaat al, kies een andere..");
 		document.cookie = "chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -71,9 +70,9 @@ function chatStack(m){
 	if(C.chat.length===30)
 		C.chat.shift();
 	C.chat.push(m);
-	printChat();
+	chatPrint();
 }
-function printChat(){
+function chatPrint(){
 	var i,x='';
 	for(i in C.chat)
 		x+="<div>"+C.chat[i]["n"]+": "+C.chat[i]["m"]+"</div>";
@@ -139,38 +138,39 @@ function gC(cname){
 	}
 	return "";
 }
+function changeToInput(){
+	cI.setAttribute("maxlength",128);
+	chatPlaceholder("Hoi "+gC("chat")+", type hier je bericht of type /help voor help");
+}
 function initChat(){
 	if(gC("chat")==="")
 		chatPlaceholder("Type eerst je nicknaam..");
-	else if(checkNick(gC("chat"),"init")){
-		cI.setAttribute("maxlength",128);
-		chatPlaceholder("Hoi "+gC("chat")+", type hier je bericht");
-	}
+	else if(checkNick(gC("chat"),"init"))
+		changeToInput();
 }
-// check nick
 function checkNick(n,type){
 	if(n.match(/^([A-z0-9_-]{1,9})$/g)===null){
 		if(checkNickLength(n,type))
 			checkNickInfo("Nicknaam mag alleen letters, cijfers en _ of - bevatten",type);
 		else return false;
 	}else return checkNickLength(n,type);
-}
-function checkNickLength(n,type){
-	if(n.length<3){
-		checkNickInfo("Nicknaam moet minimaal 3 karakters zijn",type);
-		return false;
-	}else if(n.length>9){
-		checkNickInfo("Nicknaam mag maximaal 9 karakters zijn",type);
-		return false;
-	}else return true;
-}
-function checkNickInfo(m,type){
-	if(type==="init"){
-		chatPlaceholder(m);
-		cI.value="";
-	}else{
-		chatStack({"n":"system","m":m});
-		cI.value="";
+	function checkNickLength(n,type){
+		if(n.length<3){
+			checkNickInfo("Nicknaam moet minimaal 3 karakters zijn",type);
+			return false;
+		}else if(n.length>9){
+			checkNickInfo("Nicknaam mag maximaal 9 karakters zijn",type);
+			return false;
+		}else return true;
+	}
+	function checkNickInfo(m,type){
+		if(type==="init"){
+			chatPlaceholder(m);
+			cI.value="";
+		}else{
+			chatStack({"n":"system","m":m});
+			cI.value="";
+		}
 	}
 }
 function changeNick(n){
@@ -192,6 +192,19 @@ function chatCommands(){
 		cI.value=cI.value.replace(/^\/nick\s/,"");
 		if(checkNick(cI.value,"command"))
 			changeNick(cI.value);
+		return true;
+	}else if(cI.value.match(/^\/help$/)){
+		var help=[
+			"[D64] Help",
+			" ",
+			"De volgende commando's zijn beschikbaar:",
+			" ",
+			"/nick naam",
+			"/help"
+		];
+		for(var i in help)
+			chatStack({"n":"system","m":help[i]});
+		cI.value="";
 		return true;
 	}else return false;
 }
@@ -233,4 +246,4 @@ if('serviceWorker' in navigator){
 		l('Registration failed with '+e);
 	});
 }
-}());
+})();

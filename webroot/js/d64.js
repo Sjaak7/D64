@@ -7,11 +7,12 @@ function wss(){
 		S.onopen=()=>{
 			sC("life","green");
 			if(window.location.pathname==='/')
-				S.send(JSON.stringify({mod:"chat",rq:"init"}));
+				send(JSON.stringify({mod:"chat",rq:"init"}));
 			if(cI!==null)
 				initChat();
 		};
 		S.onerror=(e)=>{
+			l(e);
 		};
 		S.onmessage=(m)=>{
 			sC("life","#ff0");
@@ -28,12 +29,10 @@ function wss(){
 		l(e)
 	}
 }
-// console
 function l(m){
 	console.log(m)
 }
-// send
-function s(m){
+function send(m){
 	sC("life","blue");
 	S.send(m)
 }
@@ -169,6 +168,9 @@ function chatConnStatus(){
 			initChat();
 	}
 }
+function removeLinebreaks(m){
+	return m.replace(/(\r\n|\n|\r)/gm,"");
+}
 document.addEventListener("DOMContentLoaded",()=>{
 	window.addEventListener("resize",scrollDown);
 	document.getElementById("btc").addEventListener("change",()=>{
@@ -178,46 +180,38 @@ document.addEventListener("DOMContentLoaded",()=>{
 	});
 	cI=document.getElementById("cI");
 	if(cI!==null){
-		// init
 		initChat();
-		/*
-		* Wait for the ENTER (13) key
-		*/
 		cI.addEventListener("keyup",(e)=>{
 			if(e.keyCode===13&&cI.value!==""){
 				// Set the nickname
 				if(gC("chat")===""){
-					// Remove line breaks
-					cI.value=cI.value.replace(/(\r\n|\n|\r)/gm,"");
+					cI.value=removeLinebreaks(cI.value);
 					if(!checkNick(cI.value))
 						chatPlaceholder("Nicknaam mag alleen letters en cijfers bevatten");
-					else if(cI.value.length<3){
+					else if(cI.value.length<3)
 						chatPlaceholder("Nicknaam moet minimaal 3 karakters zijn");
-					}else if(cI.value.length>9){
+					else if(cI.value.length>9)
 						chatPlaceholder("Nicknaam mag maximaal 9 karakters zijn");
-					}else{
+					else{
 						// request nick
 						tN=cI.value;
-						S.send(JSON.stringify({mod:"chat",rq:"nick",nick:tN}));
+						send(JSON.stringify({mod:"chat",rq:"nick",nick:tN}));
 						chatPlaceholder("Nicknaam controleren..");
 					}
 				}else if(checkNick(gC("chat"))&&gC("chat").length>=3&&cI.value.trim().length>0){
-					S.send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:cI.value.replace(/(\r\n|\n|\r)/gm,"")}}));
+					send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:removeLinebreaks(cI.value)}}));
 					cI.value=""
 				}
 			}
 		})
 	}
-	if('serviceWorker' in navigator){
-		navigator.serviceWorker.register('/service-worker.js',{scope:'/'})
-		.then((r)=>{
-			// registration worked
-			console.log('Registration succeeded. Scope is '+r.scope);
-		}).catch((e)=>{
-			// registration failed
-			console.log('Registration failed with '+e);
-		});
-	}
 	wss();
 },false);
+if('serviceWorker' in navigator){
+	navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).then((r)=>{
+		l('Registration succeeded. Scope is '+r.scope);
+	}).catch((e)=>{
+		l('Registration failed with '+e);
+	});
+}
 }());

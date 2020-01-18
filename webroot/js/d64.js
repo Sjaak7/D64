@@ -6,16 +6,14 @@ function wss(){
 		S=new WebSocket("wss://d64.nl/live");
 		S.onopen=()=>{
 			sC("life","green");
-			if(window.location.pathname==='/'){
-//				if(o===undefined)
-					S.send(JSON.stringify({mod:"chat",rq:"init"}));
-			}
+			if(window.location.pathname==='/')
+				S.send(JSON.stringify({mod:"chat",rq:"init"}));
 			if(cI!==null)
 				initChat();
 		};
-		S.onerror=e=>{
+		S.onerror=(e)=>{
 		};
-		S.onmessage=m=>{
+		S.onmessage=(m)=>{
 			sC("life","#ff0");
 			v(m.data);
 			l(m.data)

@@ -142,22 +142,41 @@ function gC(cname){
 function initChat(){
 	if(gC("chat")==="")
 		chatPlaceholder("Type eerst je nicknaam..");
-	else if(!checkNick(gC("chat"))){
-		chatPlaceholder("Geen geldige nicknaam");
-	}else if(gC("chat").length<3){
-		//
-	}else if(gC("chat").length>9){
-		//
-	}else{
+	else if(checkNick(gC("chat"),"init")){
 		cI.setAttribute("maxlength",128);
 		chatPlaceholder("Hoi "+gC("chat")+", type hier je bericht");
 	}
 }
 // check nick
-function checkNick(n){
-	if(n.match(/^([A-z0-9_-]{1,9})$/g)===null)
+function checkNick(n,type){
+	if(n.match(/^([A-z0-9_-]{1,9})$/g)===null){
+		if(checkNickLength(n,type))
+			checkNickInfo("Nicknaam mag alleen letters, cijfers en _ of - bevatten",type);
+		else return false;
+	}else return checkNickLength(n,type);
+}
+function checkNickLength(n,type){
+	if(n.length<3){
+		checkNickInfo("Nicknaam moet minimaal 3 karakters zijn",type);
 		return false;
-	else return true
+	}else if(n.length>9){
+		checkNickInfo("Nicknaam mag maximaal 9 karakters zijn",type);
+		return false;
+	}else return true;
+}
+function checkNickInfo(m,type){
+	if(type==="init"){
+		chatPlaceholder(m);
+		cI.value="";
+	}else{
+		chatStack({"n":"system","m":m});
+		cI.value="";
+	}
+}
+function changeNick(n){
+	tN=n;
+        send(JSON.stringify({mod:"chat",rq:"nick",nick:tN}));
+        chatPlaceholder("Nicknaam controleren..");
 }
 // connection status
 function chatConnStatus(){
@@ -167,6 +186,14 @@ function chatConnStatus(){
 		else if(S.readyState===S.OPEN)
 			initChat();
 	}
+}
+function chatCommands(){
+	if(cI.value.match(/^\/nick\s/)){
+		cI.value=cI.value.replace(/^\/nick\s/,"");
+		if(checkNick(cI.value,"command"))
+			changeNick(cI.value);
+		return true;
+	}else return false;
 }
 function removeLinebreaks(m){
 	return m.replace(/(\r\n|\n|\r)/gm,"");
@@ -183,24 +210,16 @@ document.addEventListener("DOMContentLoaded",()=>{
 		initChat();
 		cI.addEventListener("keyup",(e)=>{
 			if(e.keyCode===13&&cI.value!==""){
+				cI.value=removeLinebreaks(cI.value);
 				// Set the nickname
 				if(gC("chat")===""){
-					cI.value=removeLinebreaks(cI.value);
-					if(!checkNick(cI.value))
-						chatPlaceholder("Nicknaam mag alleen letters en cijfers bevatten");
-					else if(cI.value.length<3)
-						chatPlaceholder("Nicknaam moet minimaal 3 karakters zijn");
-					else if(cI.value.length>9)
-						chatPlaceholder("Nicknaam mag maximaal 9 karakters zijn");
-					else{
-						// request nick
-						tN=cI.value;
-						send(JSON.stringify({mod:"chat",rq:"nick",nick:tN}));
-						chatPlaceholder("Nicknaam controleren..");
+					if(checkNick(cI.value,"init"))
+						changeNick(cI.value);
+				}else if(checkNick(gC("chat"),"init")&&cI.value.trim().length>0){
+					if(!chatCommands()){
+						send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:cI.value}}));
+						cI.value=""
 					}
-				}else if(checkNick(gC("chat"))&&gC("chat").length>=3&&cI.value.trim().length>0){
-					send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:removeLinebreaks(cI.value)}}));
-					cI.value=""
 				}
 			}
 		})

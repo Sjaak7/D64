@@ -1,6 +1,6 @@
 var d64=(function(){
 // C = chat, S = socket, cI = chat input, tN = temp nick
-var C,S,o,hidden,visibilityChange,cI,tN,btcChat=true;
+var C,S,o,hidden,visibilityChange,cI,tN,btcChat=true,startingX;
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
@@ -93,8 +93,8 @@ function v(d){
 	}
 }
 function scrollDown(){
-	content=document.getElementById("content");
-	window.scrollTo(0,content.scrollHeight);
+	content=document.getElementById("cFrame");
+	document.getElementById("p1").scrollTo(0,content.scrollHeight);
 }
 // set color
 function sC(i,c){
@@ -211,8 +211,51 @@ function chatCommands(){
 function removeLinebreaks(m){
 	return m.replace(/(\r\n|\n|\r)/gm,"");
 }
+function initTouch(){
+	var p1=document.getElementById("p1"),p2=document.getElementById("p2");
+	var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
+	p1.style.height=maxPanelHeight;
+	p1.addEventListener("touchstart",(e)=>{
+//		e.preventDefault();
+		startingX=e.touches[0].clientX;
+	});
+	p1.addEventListener("touchmove",(e)=>{
+//		e.preventDefault();
+		var touch=e.touches[0],change=startingX-touch.clientX;
+		p1.style.left="-"+change+"px";
+
+		if(change<0)
+			return;
+
+		p1.style.left="-"+change+"px";
+		p2.style.display="block";
+		p2.style.left=(screen.width-change)+"px";
+	});
+	p1.addEventListener("touchend",(e)=>{
+//		e.preventDefault();
+		var change=startingX-e.changedTouches[0].clientX,threshold=screen.width/3;
+		if(change<threshold){
+			p1.style.left=0;
+
+			p2.style.left="100%";
+			p2.style.display="none";
+		}else{
+			p1.style.transition="all .3s";
+			p2.style.transition="all .3s";
+			p1.style.left="-100%";
+
+			p2.style.left="0";
+			p2.style.display="block";
+		}
+	});
+}
 document.addEventListener("DOMContentLoaded",()=>{
-	window.addEventListener("resize",scrollDown);
+	window.addEventListener("resize",function(){
+        var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
+        document.getElementById("p1").style.height=maxPanelHeight;
+		scrollDown();
+	});
+	initTouch();
 	document.getElementById("btc").addEventListener("change",()=>{
 		if(this.checked)
 			btcChat=true;

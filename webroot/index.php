@@ -25,10 +25,15 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 	else $bitprice = 'NaN';
 
 	$d64->setContent(
-		'<h1>Lobby:</h1>'.
-		'<div id="cFrame">'.
-			'<div id="cB"></div>'.
-			'<div class="w3-margin-top w3-small" id="cN"></div>'.
+		'<div class="p1" id="p1">'.
+			'<h1>Lobby:</h1>'.
+			'<div id="cFrame">'.
+				'<div id="cB"></div>'.
+				'<div class="w3-margin-top w3-small" id="cN"></div>'.
+			'</div>'.
+		'</div>'.
+		'<div class="p2" id="p2">'.
+			'hallo'.
 		'</div>'
 	);
 	$d64->footer->setFooter(
@@ -49,9 +54,9 @@ $d64->init();
 $d64->header->set_script('<script src="/js/d64.js"></script>');
 
 echo $d64->header->makeHeader().
-     '<div class="container" id="content">'.
-         $d64->getContent().
-     '</div>'.
-     $d64->footer->makeFooter();
+//	'<div class="container" id="content">'.
+		$d64->getContent().
+//	'</div>'.
+	$d64->footer->makeFooter();
 
 ?>

@@ -153,11 +153,13 @@ body{
 	position:fixed;
 }
 #nav{
-	min-height:6vh;
+	height:6vh;
+	min-height:48px;
 	width:100%;
 }
 #nav a{
 	text-transform:capitalize;
+	height:100%;
 }
 #life{
 	color:red;
@@ -170,6 +172,12 @@ body{
 	color:#fff;
 	padding-left:0.5rem;*/
 }
+.blog{
+	height:100%;
+	overflow-y:scroll;
+	background-color:#616161;
+	color:#fff;
+}
 .p1{
 	position:relative;
 	top:6vh;
@@ -177,6 +185,7 @@ body{
 	width:100vw;
 	color:#fff;
 	overflow-y:scroll;
+	scroll-behavior:smooth;
 }
 .p2{
 	position:absolute;
@@ -190,7 +199,6 @@ body{
 #footer{
 	position:fixed;
 	bottom:0px;
-	height:100px;
 	width:100%;
 	line-height:1;
 }
@@ -202,7 +210,7 @@ body{
 #cIForm{
 	padding:3px 3px 0px 3px!important;
 	width:100%;
-	height:100%;
+	height:100px;
 }
 #cI{
 	width:100%;

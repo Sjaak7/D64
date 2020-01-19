@@ -1,6 +1,6 @@
 var d64=(function(){
 // C = chat, S = socket, cI = chat input, tN = temp nick
-var C,S,o,hidden,visibilityChange,cI,tN,btcChat=true,startingX;
+var C,S,o,hidden,visibilityChange,cI,tN,btcChat=true,startingX,scrollTimeout;
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
@@ -216,17 +216,18 @@ function initTouch(){
 	p1=p1[0];
 	var p2=document.getElementsByClassName("p2");
 	p2=p2[0];
-	var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
-	p1.style.height=maxPanelHeight;
+	height();
+        var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
+        p1.style.height=maxPanelHeight;
+	p1.style.top=document.getElementById("nav").offsetHeight+"px";
 	p1.addEventListener("touchstart",start);
 	p1.addEventListener("touchmove",move);
 	p1.addEventListener("touchend",end);
 	function start(e){
-//		e.preventDefault();
+		clearTimeout(scrollTimeout);
 		startingX=e.touches[0].clientX;
 	}
 	function move(e){
-//              e.preventDefault();
                 var touch=e.touches[0],change=startingX-touch.clientX;
                 p1.style.left="-"+change+"px";
 
@@ -238,7 +239,6 @@ function initTouch(){
                 p2.style.left=(screen.width-change)+"px";
 	}
 	function end(e){
-//              e.preventDefault();
                 var change=startingX-e.changedTouches[0].clientX,threshold=screen.width/3;
                 if(change<threshold){
                         p1.style.left=0;
@@ -257,27 +257,37 @@ function initTouch(){
                         p2.classList.remove("p2");
                         p2.removeAttribute("style");
 
-                //      p2.style.left="0";
-                //      p2.style.display="block";
 			p1.removeEventListener("touchstart",start);
 			p1.removeEventListener("touchmove",move);
 			p1.removeEventListener("touchend",end)
 			initTouch();
+
+			scrollTimeout=setTimeout(function(){
+				document.getElementById("p1").scrollTo(0,document.getElementById("cFrame").scrollHeight);
+			},700);
                 }
 	}
 }
+function height(){
+	var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
+	document.getElementById("p1").style.height=maxPanelHeight;
+	p1.style.top=document.getElementById("nav").offsetHeight+"px";
+}
 document.addEventListener("DOMContentLoaded",()=>{
 	window.addEventListener("resize",function(){
-        var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
-        document.getElementById("p1").style.height=maxPanelHeight;
+		height();
 		scrollDown();
 	});
-	initTouch();
-	document.getElementById("btc").addEventListener("change",()=>{
-		if(this.checked)
-			btcChat=true;
-		else btcChat=false;
-	});
+	if(document.location.pathname==='/')
+		initTouch();
+	else height();
+	if(document.getElementById("btc")){
+		document.getElementById("btc").addEventListener("change",()=>{
+			if(this.checked)
+				btcChat=true;
+			else btcChat=false;
+		});
+	}
 	cI=document.getElementById("cI");
 	if(cI!==null){
 		initChat();

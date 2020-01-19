@@ -88,7 +88,10 @@ http{
 		ssl_ciphers ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5;
 
 		ssl_ecdh_curve secp384r1;
-		ssl_session_tickets off;
+		ssl_session_tickets on;
+
+ssl_session_cache shared:ssl_session_cache:10m;
+ssl_session_timeout 5m;
 
 		# OCSP stapling
 		ssl_stapling on;
@@ -136,7 +139,10 @@ http{
 		ssl_ciphers ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5;
 
 		ssl_ecdh_curve secp384r1;
-		ssl_session_tickets off;
+		ssl_session_tickets on;
+
+ssl_session_cache shared:ssl_session_cache:10m;
+ssl_session_timeout 5m;
 
 		# OCSP stapling
 		ssl_stapling on;

@@ -121,6 +121,7 @@ http{
 		add_header Content-Security-Policy "default-src 'self'; frame-src https://www.youtube-nocookie.com; frame-ancestors 'none'; form-action 'self';";
 		add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 		add_header Feature-Policy "accelerometer 'none'; camera 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'";
+		add_header X-FastCGI-cache $upstream_cache_status;
 
 		ssl_certificate /etc/letsencrypt/live/d64.nl/fullchain.pem;
 		ssl_certificate_key /etc/letsencrypt/live/d64.nl/privkey.pem;
@@ -219,8 +220,8 @@ http{
 		}
 
                 location /css/w3.css {
-#			expires 2d;
                         access_log off;
+#			expires 2d;
 #			add_header Cache-Control "public";
                 }
 
@@ -253,7 +254,6 @@ http{
 			fastcgi_cache_use_stale error timeout updating invalid_header http_500 http_503;
 			fastcgi_cache_min_uses 1;
 			fastcgi_cache_lock on;
-			add_header X-FastCGI-cache $upstream_cache_status;
 		}
 	}
 }

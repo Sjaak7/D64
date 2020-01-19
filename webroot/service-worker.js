@@ -1,15 +1,15 @@
 var CACHE = 'cache-and-update';
 
-self.addEventListener('install', function(evt) {
+self.addEventListener('install',function(evt){
 	console.log('The service worker is being installed.');
 	evt.waitUntil(precache());
 });
-self.addEventListener('fetch', function(evt) {
+self.addEventListener('fetch',function(evt){
 	console.log('The service worker is serving the asset.');
 	evt.waitUntil(update(evt.request));
 });
-function precache() {
-	return caches.open(CACHE).then(function (cache) {
+function precache(){
+	return caches.open(CACHE).then(function(cache){
 	return cache.addAll([
 			'/manifest.json',
 			'/favicon.ico',
@@ -21,18 +21,17 @@ function precache() {
 		]);
 	});
 }
-function fromCache(request) {
-	return caches.open(CACHE).then(function (cache) {
-		return cache.match(request).then(function (matching) {
+function fromCache(request){
+	return caches.open(CACHE).then(function(cache){
+		return cache.match(request).then(function(matching){
 			return matching || Promise.reject('no-match');
 		});
 	});
 }
-
-function update(request) {
-	return caches.open(CACHE).then(function (cache) {
-		return fetch(request).then(function (response) {
-			return cache.put(request, response);
+function update(request){
+	return caches.open(CACHE).then(function(cache){
+		return fetch(request).then(function(response){
+			return cache.put(request,response);
 		});
 	});
 }

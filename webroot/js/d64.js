@@ -212,42 +212,59 @@ function removeLinebreaks(m){
 	return m.replace(/(\r\n|\n|\r)/gm,"");
 }
 function initTouch(){
-	var p1=document.getElementById("p1"),p2=document.getElementById("p2");
+	var p1=document.getElementsByClassName("p1");
+	p1=p1[0];
+	var p2=document.getElementsByClassName("p2");
+	p2=p2[0];
 	var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
 	p1.style.height=maxPanelHeight;
-	p1.addEventListener("touchstart",(e)=>{
+	p1.addEventListener("touchstart",start);
+	p1.addEventListener("touchmove",move);
+	p1.addEventListener("touchend",end);
+	function start(e){
 //		e.preventDefault();
 		startingX=e.touches[0].clientX;
-	});
-	p1.addEventListener("touchmove",(e)=>{
-//		e.preventDefault();
-		var touch=e.touches[0],change=startingX-touch.clientX;
-		p1.style.left="-"+change+"px";
+	}
+	function move(e){
+//              e.preventDefault();
+                var touch=e.touches[0],change=startingX-touch.clientX;
+                p1.style.left="-"+change+"px";
 
-		if(change<0)
-			return;
+                if(change<0)
+                        return;
 
-		p1.style.left="-"+change+"px";
-		p2.style.display="block";
-		p2.style.left=(screen.width-change)+"px";
-	});
-	p1.addEventListener("touchend",(e)=>{
-//		e.preventDefault();
-		var change=startingX-e.changedTouches[0].clientX,threshold=screen.width/3;
-		if(change<threshold){
-			p1.style.left=0;
+                p1.style.left="-"+change+"px";
+                p2.style.display="block";
+                p2.style.left=(screen.width-change)+"px";
+	}
+	function end(e){
+//              e.preventDefault();
+                var change=startingX-e.changedTouches[0].clientX,threshold=screen.width/3;
+                if(change<threshold){
+                        p1.style.left=0;
 
-			p2.style.left="100%";
-			p2.style.display="none";
-		}else{
-			p1.style.transition="all .3s";
-			p2.style.transition="all .3s";
-			p1.style.left="-100%";
+                        p2.style.left="100%";
+                        p2.style.display="none";
+                }else{
+                        p1.style.transition="all .3s";
+                        p2.style.transition="all .3s";
+                        p1.style.left="-100%";
 
-			p2.style.left="0";
-			p2.style.display="block";
-		}
-	});
+                        p1.classList.add("p2");
+                        p1.classList.remove("p1");
+                        p1.removeAttribute("style");
+                        p2.classList.add("p1");
+                        p2.classList.remove("p2");
+                        p2.removeAttribute("style");
+
+                //      p2.style.left="0";
+                //      p2.style.display="block";
+			p1.removeEventListener("touchstart",start);
+			p1.removeEventListener("touchmove",move);
+			p1.removeEventListener("touchend",end)
+			initTouch();
+                }
+	}
 }
 document.addEventListener("DOMContentLoaded",()=>{
 	window.addEventListener("resize",function(){

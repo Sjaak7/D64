@@ -174,7 +174,7 @@ body{
 	position:relative;
 	top:6vh;
 	left:0;
-	width:100%;
+	width:100vw;
 	color:#fff;
 	overflow-y:scroll;
 }
@@ -182,7 +182,7 @@ body{
 	position:absolute;
 	top:6vh;
 	left:100%;
-	width:100%;
+	width:100vw;
 	color:#fff;
 	overflow-y:scroll;
 	display:none;

@@ -168,6 +168,7 @@ sudo docker run \
 	-e TZ=Europe/Amsterdam \
 	--network $NGINX_PHP_NETWORK \
 	--ip 172.18.0.50 \
+	--ip6 fcde::4 \
 	-p 80:80/tcp \
 	-p 443:443/tcp \
 	-v $(pwd)/ramdisk/webroot:/var/www/html:ro \

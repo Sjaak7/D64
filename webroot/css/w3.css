@@ -164,36 +164,25 @@ body{
 #life{
 	color:red;
 }
-.container{
-/*	margin-top:5vh;
-	margin-bottom:100px;
-	height:calc(95vh+156px);
-	overflow-y:scroll;
-	color:#fff;
-	padding-left:0.5rem;*/
-}
-.blog{
-	height:100%;
-	overflow-y:scroll;
-	background-color:#616161;
-	color:#fff;
-}
-.p1{
+#content{
 	position:relative;
-	top:6vh;
-	left:0;
-	width:100vw;
+	color:#fff;
+	overflow-y:scroll;
+}
+.swipePage{
 	color:#fff;
 	overflow-y:scroll;
 	scroll-behavior:smooth;
 }
-.p2{
+.visiblePage{
+	position:relative;
+	left:0;
+	width:100vw;
+}
+.hiddenPage{
 	position:absolute;
-	top:6vh;
 	left:100%;
 	width:100vw;
-	color:#fff;
-	overflow-y:scroll;
 	display:none;
 }
 #footer{

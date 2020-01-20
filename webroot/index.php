@@ -25,14 +25,14 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 	else $bitprice = 'NaN';
 
 	$d64->setContent(
-		'<div class="p1" id="p1">'.
+		'<div class="swipePage visiblePage" id="p1">'.
 			'<h1>Lobby:</h1>'.
 			'<div id="cFrame">'.
 				'<div id="cB"></div>'.
 				'<div class="w3-margin-top w3-small" id="cN"></div>'.
 			'</div>'.
 		'</div>'.
-		'<div class="p2" id="p2">'.
+		'<div class="swipePage hiddenPage" id="p2">'.
 			'<h1>Swipe test</h1>'.
 		'</div>'
 	);

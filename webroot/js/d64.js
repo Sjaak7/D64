@@ -1,6 +1,6 @@
 var d64=(function(){
 // C = chat, S = socket, cI = chat input, tN = temp nick
-var C,S,o,hidden,visibilityChange,cI,tN,btcChat=true,startingX,scrollTimeout;
+var C,S,o,hidden,visibilityChange,cI,tN,btcChat=true,startingX,scrollTimeout,apppage=false;
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
@@ -83,11 +83,13 @@ function chatPrint(){
 function v(d){
 	try{
 		o=JSON.parse(d);
-		if(typeof(o.mod)!=="undefined"&&o.mod==="btc"&&btcChat===true)
+		if(apppage&&typeof(o.mod)!=="undefined"&&o.mod==="btc"&&btcChat===true){
 			chatStack({"n":"btc-bot","m":"&euro; "+o.btc_euro});
-		else if(typeof(o.mod)!=="undefined"&&o.mod==="chat")
+			sC("life","green");
+		}else if(apppage&&typeof(o.mod)!=="undefined"&&o.mod==="chat"){
 			chatParser();
-		sC("life","green");
+			sC("life","green");
+		}
 	}catch(e){
 		l(e);
 	}
@@ -212,17 +214,44 @@ function removeLinebreaks(m){
 	return m.replace(/(\r\n|\n|\r)/gm,"");
 }
 function initTouch(){
-	var p1=document.getElementsByClassName("p1");
-	p1=p1[0];
-	var p2=document.getElementsByClassName("p2");
-	p2=p2[0];
-	height();
-        var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
-        p1.style.height=maxPanelHeight;
-	p1.style.top=document.getElementById("nav").offsetHeight+"px";
+	var
+	p1=document.getElementsByClassName("visiblePage")[0],
+	p2=document.getElementsByClassName("hiddenPage")[0],
+	navOffset=document.getElementById("nav").offsetHeight,
+	maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-navOffset+"px";
+
+	p1.style.height=maxPanelHeight;
+	p1.style.top=navOffset+"px";
+        p2.style.height=maxPanelHeight;
+        p2.style.top=navOffset+"px";
+
 	p1.addEventListener("touchstart",start);
 	p1.addEventListener("touchmove",move);
 	p1.addEventListener("touchend",end);
+
+	window.addEventListener('keyup',keyboard);
+
+	function keyboard(e){
+                if(e.key==='ArrowLeft'){
+			window.removeEventListener("keyup",keyboard);
+			clearTimeout(scrollTimeout);
+
+                        p1.style.transition="all .3s";
+                        p2.style.transition="all .3s";
+                        p1.style.left="-100%";
+
+                        p1.classList.add("hiddenPage");
+                        p1.classList.remove("visiblePage");
+                        p1.removeAttribute("style");
+                        p2.classList.add("visiblePage");
+                        p2.classList.remove("hiddenPage");
+                        p2.removeAttribute("style");
+
+			scrollTimer();
+
+                        initTouch();
+                }
+	}
 	function start(e){
 		clearTimeout(scrollTimeout);
 		startingX=e.touches[0].clientX;
@@ -250,37 +279,45 @@ function initTouch(){
                         p2.style.transition="all .3s";
                         p1.style.left="-100%";
 
-                        p1.classList.add("p2");
-                        p1.classList.remove("p1");
+                        p1.classList.add("hiddenPage");
+                        p1.classList.remove("visiblePage");
                         p1.removeAttribute("style");
-                        p2.classList.add("p1");
-                        p2.classList.remove("p2");
+                        p2.classList.add("visiblePage");
+                        p2.classList.remove("hiddenPage");
                         p2.removeAttribute("style");
 
 			p1.removeEventListener("touchstart",start);
 			p1.removeEventListener("touchmove",move);
-			p1.removeEventListener("touchend",end)
-			initTouch();
+			p1.removeEventListener("touchend",end);
 
-			scrollTimeout=setTimeout(function(){
-				document.getElementById("p1").scrollTo(0,document.getElementById("cFrame").scrollHeight);
-			},700);
+			scrollTimer();
+
+			initTouch();
                 }
+	}
+	function scrollTimer(){
+		scrollTimeout=setTimeout(function(){
+			p2.scrollTo(0,document.getElementById(p2.id).scrollHeight);
+		},700);
 	}
 }
 function height(){
-	var maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px";
-	document.getElementById("p1").style.height=maxPanelHeight;
-	p1.style.top=document.getElementById("nav").offsetHeight+"px";
+	var
+	maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px",
+	content=document.getElementById("content");
+	content.style.height=maxPanelHeight;
+	content.style.top=document.getElementById("nav").offsetHeight+"px";
 }
 document.addEventListener("DOMContentLoaded",()=>{
-	window.addEventListener("resize",function(){
-		height();
+	window.addEventListener("resize",()=>{
+		if(!apppage)
+			height();
 		scrollDown();
 	});
-	if(document.location.pathname==='/')
+	if(document.location.pathname==='/'){
+		apppage=true;
 		initTouch();
-	else height();
+	}else height();
 	if(document.getElementById("btc")){
 		document.getElementById("btc").addEventListener("change",()=>{
 			if(this.checked)

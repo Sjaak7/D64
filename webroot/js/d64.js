@@ -236,16 +236,7 @@ function initTouch(){
 			window.removeEventListener("keyup",keyboard);
 			clearTimeout(scrollTimeout);
 
-                        p1.style.transition="all .3s";
-                        p2.style.transition="all .3s";
-                        p1.style.left="-100%";
-
-                        p1.classList.add("hiddenPage");
-                        p1.classList.remove("visiblePage");
-                        p1.removeAttribute("style");
-                        p2.classList.add("visiblePage");
-                        p2.classList.remove("hiddenPage");
-                        p2.removeAttribute("style");
+			endMove();
 
 			scrollTimer();
 
@@ -275,16 +266,7 @@ function initTouch(){
                         p2.style.left="100%";
                         p2.style.display="none";
                 }else{
-                        p1.style.transition="all .3s";
-                        p2.style.transition="all .3s";
-                        p1.style.left="-100%";
-
-                        p1.classList.add("hiddenPage");
-                        p1.classList.remove("visiblePage");
-                        p1.removeAttribute("style");
-                        p2.classList.add("visiblePage");
-                        p2.classList.remove("hiddenPage");
-                        p2.removeAttribute("style");
+			endMove();
 
 			p1.removeEventListener("touchstart",start);
 			p1.removeEventListener("touchmove",move);
@@ -294,6 +276,18 @@ function initTouch(){
 
 			initTouch();
                 }
+	}
+	function endMove(){
+		p1.style.transition="all .3s";
+		p2.style.transition="all .3s";
+		p1.style.left="-100%";
+
+		p1.classList.add("hiddenPage");
+		p1.classList.remove("visiblePage");
+		p1.removeAttribute("style");
+		p2.classList.add("visiblePage");
+		p2.classList.remove("hiddenPage");
+		p2.removeAttribute("style");
 	}
 	function scrollTimer(){
 		scrollTimeout=setTimeout(function(){

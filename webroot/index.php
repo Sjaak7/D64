@@ -44,8 +44,10 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 	);
 }elseif($d64->path[0]==='offline'){
 	$d64->setContent(
-		'<h2>Geen verbinding</h2>'.
-		'<p>Je hebt geen verbinding met internet. Ik probeer het opnieuw als de verbinding hersteld is.</p>'
+		'<div id="content">'.
+			'<h1>Geen verbinding</h1>'.
+			'<p>Je hebt geen verbinding met internet. Ik probeer het opnieuw als de verbinding hersteld is.</p>'.
+		'</div>'
 	);
 }
 

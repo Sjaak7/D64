@@ -49,12 +49,17 @@ function chatParser(){
 		SC("chat",tempNick,100);
 		changeToInput();
 	}else if(typeof(o.err)!=="undefined"){
-		if(o.err==="dup_nick")
+		if(o.err==="dup_nick"){
 			chatPlaceholder("Deze nicknaam bestaat al, kies een andere..");
-		if(o.err==="ill_nick")
+			removeCookie();
+		}else if(o.err==="ill_nick"){
 			chatPlaceholder("Nicknaam bevat illegale karakters");
-		document.cookie="chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+			removeCookie();
+		}
 	}
+}
+function removeCookie(){
+	document.cookie="chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 }
 function chatPlaceholder(p){
 	chatInput.placeholder=p;

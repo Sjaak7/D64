@@ -44,10 +44,7 @@ class chat64
 						$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true);
 					}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
 				}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'ill_nick']),false,$key);
-			}elseif($data['rq']==='chan'){
-				$this->chatData['chan']['test']['chat']="test";
-				$this->d64->addConsoleData('chat',['channels',count($this->chatData['chan'])]);
-			}
+			}elseif($data['rq']==='chan') $this->newChannel($data,$key);
 		}elseif(isset($data['msg'])) $this->handleChatData($data,$key);
 	}
 
@@ -56,6 +53,15 @@ class chat64
 		if($nicks = $this->getNicks())
 			$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$nicks]),true);
 		else $this->d64->send(json_encode(['mod'=>'chat','nicks'=>'none']),true);
+
+		// Remove founder channels
+		if(isset($this->chatData['chan']))
+			foreach($this->chatData['chan'] as $k => $v)
+				if($this->chatData['chan'][$k]['founder']===$key)
+					unset($this->chatData['chan'][$k]);
+
+		if(is_array($this->chatData))
+			$this->d64->addConsoleData('chat',['channels',count($this->chatData['chan'])]);
 	}
 
 	public function END() : void
@@ -63,8 +69,22 @@ class chat64
 		echo "Saving chat file\n";
 		$myfile = fopen("socket/chat.json", "w") or die("Unable to open file!");
 		$this->chatData['mod']='chat';
+		foreach($this->chatData['chan'] as $k => $v)
+			if($k!=='lobby')
+				unset($this->chatData['chan'][$k]);
 		fwrite($myfile,json_encode($this->chatData));
 		fclose($myfile);
+	}
+
+	private function newChannel(array $data, int $key) : void
+	{
+		if(preg_match('/^[A-Za-z]{3,9}$/',$data['chan'])){
+			if(!isset($this->chatData['chan'][$data['chan']])){
+				$this->chatData['chan'][$data['chan']]=['founder'=>$key,'chat'=>'test'];
+				$this->d64->send(json_encode(['mod'=>'chat','acc_chan'=>$data['chan']]),false,$key);
+				$this->d64->addConsoleData('chat',['channels',count($this->chatData['chan'])]);
+			}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_chan']),false,$key);
+		}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'ill_chan']),false,$key);
 	}
 
 	private function handleChatData(array $data, int $key) : void
@@ -79,7 +99,7 @@ class chat64
 
 	private function isValidNick(string $nick) : bool
 	{
-		if(preg_match("/^([A-Za-z0-9_-]{3,9})$/",$nick))
+		if(preg_match("/^[A-Za-z0-9_-]{3,9}$/",$nick))
 			return true;
 		return false;
 	}

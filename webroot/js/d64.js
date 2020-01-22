@@ -48,9 +48,12 @@ function chatParser(){
 	else if(typeof(o.qjb)!=="undefined"&&o.qjb===tempNick){
 		SC("chat",tempNick,100);
 		changeToInput();
-	}else if(typeof(o.err)!=="undefined"&&o.err==="dup_nick"){
-		chatPlaceholder("Deze nicknaam bestaat al, kies een andere..");
-		document.cookie = "chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+	}else if(typeof(o.err)!=="undefined"){
+		if(o.err==="dup_nick")
+			chatPlaceholder("Deze nicknaam bestaat al, kies een andere..");
+		if(o.err==="ill_nick")
+			chatPlaceholder("Nicknaam bevat illegale karakters");
+		document.cookie="chat=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 	}
 }
 function chatPlaceholder(p){
@@ -201,9 +204,9 @@ function chatConnStatus(){
 }
 function chatCommands(){
 	if(chatInput.value.match(/^\/nick\s/)){
-		chatInput.value=chatInput.value.replace(/^\/nick\s/,"");
-		if(checkNick(chatInput.value,"command"))
-			changeNick(chatInput.value);
+		var rqNick=chatInput.value.replace(/^\/nick\s/,"");
+		if(checkNick(rqNick,"command"))
+			changeNick(rqNick);
 		return true;
 	}else if(chatInput.value.match(/^\/help$/)){
 		var help=[
@@ -220,8 +223,9 @@ function chatCommands(){
 		chatInput.value="";
 		return true;
 	}else if(chatInput.value.match(/^\/channel\s/)){
-		if(checkChannel(chatInput.value.replace(/^\/channel\s/,"")))
-			send(JSON.stringify({mod:"chat",nC:"test"}));
+		var rqChan=chatInput.value.replace(/^\/channel\s/,"");
+		if(checkChannel(chatInput.value))
+			send(JSON.stringify({mod:"chat",rq:"chan",chan:rqChan}));
 		return true;
 	}else return false;
 }

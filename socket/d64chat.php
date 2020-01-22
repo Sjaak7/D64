@@ -15,10 +15,12 @@ class chat64
 
 	public function handshake(array $headers, int $key) : void
 	{
-		if(isset($headers['Cookie']) && $this->isValidNick(str_replace('chat=','',$headers['Cookie']))){
-			if(!$this->isDuplicateNick(str_replace('chat=','',$headers['Cookie'])))
-				$this->d64->addClientInfo(3,str_replace('chat=','',$headers['Cookie']),$key);
-			else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
+		if(isset($headers['Cookie'])){
+			if($this->isValidNick(str_replace('chat=','',$headers['Cookie']))){
+				if(!$this->isDuplicateNick(str_replace('chat=','',$headers['Cookie'])))
+					$this->d64->addClientInfo(3,str_replace('chat=','',$headers['Cookie']),$key);
+				else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
+			}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'ill_nick']),false,$key);
 		}
 	}
 
@@ -35,25 +37,18 @@ class chat64
                 				$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true,0,'text',$key);
 				}
 			}elseif($data['rq']==='nick'){
-				if(!$this->isDuplicateNick($data['nick'])){
-					$this->d64->addClientInfo(3,$data['nick'],$key);
-					$this->d64->send(json_encode(['mod'=>'chat','qjb'=>$data['nick']]),false,$key);
-					$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true);
-				}else{
-					$this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
-				}
+				if($this->isValidNick($data['nick'])){
+					if(!$this->isDuplicateNick($data['nick'])){
+						$this->d64->addClientInfo(3,$data['nick'],$key);
+						$this->d64->send(json_encode(['mod'=>'chat','qjb'=>$data['nick']]),false,$key);
+						$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true);
+					}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
+				}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'ill_nick']),false,$key);
+			}elseif($data['rq']==='chan'){
+				$this->chatData['chan']['test']['chat']="test";
+				$this->d64->addConsoleData('chat',['channels',count($this->chatData['chan'])]);
 			}
-		}elseif(isset($data['msg'])){
-			$this->handleChatData($data,$key);
-		}elseif(isset($data['nN']) && $this->isValidNick($data['nN'])){
-			if(!$this->isDuplicateNick($data['nN'])){
-				$this->d64->addClientInfo(3,$data['nN'],$key);
-				$this->d64->send(json_encode(['nicks'=>$this->getNicks()]),true,0);
-			}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
-		}elseif(isset($data['nC'])){
-			$this->chatData['chan']['test']['chat']="test";
-			$this->d64->addConsoleData('chat',['channels',count($this->chatData['chan'])]);
-		}
+		}elseif(isset($data['msg'])) $this->handleChatData($data,$key);
 	}
 
 	public function closeConnection(int $key) : void
@@ -84,7 +79,7 @@ class chat64
 
 	private function isValidNick(string $nick) : bool
 	{
-		if(preg_match("/^([A-z0-9_-]{3,9})$/",$nick))
+		if(preg_match("/^([A-Za-z0-9_-]{3,9})$/",$nick))
 			return true;
 		return false;
 	}

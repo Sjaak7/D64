@@ -424,6 +424,7 @@ class d64{
 				$this->module[$key]['mod']->$call();
 			}
 		}
+		$this->send('Development',true,0,'close');
 	}
 
 	public function addClientInfo(int $index, string $info, int $lastKey) : void

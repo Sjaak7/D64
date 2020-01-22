@@ -1,16 +1,15 @@
-var CACHE = 'cache-and-update';
-
-self.addEventListener('install',function(evt){
+var C='v1';
+self.addEventListener('install',(e)=>{
 	console.log('The service worker is being installed.');
-	evt.waitUntil(precache());
+	e.waitUntil(preCache())
 });
-self.addEventListener('fetch',function(evt){
+self.addEventListener('fetch',(e)=>{
 	console.log('The service worker is serving the asset.');
-	evt.waitUntil(update(evt.request));
+	e.waitUntil(update(e.request))
 });
-function precache(){
-	return caches.open(CACHE).then(function(cache){
-	return cache.addAll([
+function preCache(){
+	return caches.open(C).then((c)=>{
+	return c.addAll([
 			'/manifest.json',
 			'/favicon.ico',
 			'/css/w3.css',
@@ -21,17 +20,17 @@ function precache(){
 		]);
 	});
 }
-function fromCache(request){
-	return caches.open(CACHE).then(function(cache){
-		return cache.match(request).then(function(matching){
-			return matching || Promise.reject('no-match');
+function fromCache(r){
+	return caches.open(C).then((c)=>{
+		return c.match(r).then((matching)=>{
+			return matching||Promise.reject('no-match')
 		});
 	});
 }
-function update(request){
-	return caches.open(CACHE).then(function(cache){
-		return fetch(request).then(function(response){
-			return cache.put(request,response);
+function update(r){
+	return caches.open(C).then((c)=>{
+		return fetch(r).then((response)=>{
+			return c.put(r,response)
 		});
 	});
 }

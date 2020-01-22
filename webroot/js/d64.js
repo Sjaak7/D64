@@ -179,7 +179,7 @@ function checkNick(n,type){
 	}
 }
 function checkChannel(c){
-	if(c.match(/^[A-z]{3,9}$/g)){
+	if(c.match(/^[A-Za-z]{3,9}$/g)){
 		cI.value="";
 		changeToInput();
 		return true;
@@ -224,7 +224,7 @@ function chatCommands(){
 		return true;
 	}else if(chatInput.value.match(/^\/channel\s/)){
 		var rqChan=chatInput.value.replace(/^\/channel\s/,"");
-		if(checkChannel(chatInput.value))
+		if(checkChannel(rqChan))
 			send(JSON.stringify({mod:"chat",rq:"chan",chan:rqChan}));
 		return true;
 	}else return false;

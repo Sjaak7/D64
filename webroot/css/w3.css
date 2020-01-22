@@ -1,4 +1,4 @@
-/* W3.CSS 4.13 June 2019 by Jan Egil and Borge Refsnes */
+/* W3.CSS 4.13 June 2019 by J. Egil and B. Refsnes */
 html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}
 /* Extract from normalize.css by Nicolas Gallagher and Jonathan Neal git.io/normalize */
 html{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}
@@ -150,62 +150,63 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}
 /* d64 */
 body{
 	background-color:#616161;
-	position:fixed;
+	position:fixed
 }
 #nav{
 	height:6vh;
 	min-height:48px;
-	width:100%;
+	width:100%
 }
 #nav a{
 	text-transform:capitalize;
-	height:100%;
+	height:100%
 }
 #life{
-	color:red;
+	color:red
 }
 #content{
 	position:relative;
+	width:100vw;
 	color:#fff;
-	overflow-y:scroll;
+	overflow-y:scroll
 }
 .swipePage{
 	color:#fff;
 	overflow-y:scroll;
-	scroll-behavior:smooth;
+	scroll-behavior:smooth
 }
 .visiblePage{
 	position:relative;
 	left:0;
-	width:100vw;
+	width:100vw
 }
 .hiddenPage{
 	position:absolute;
 	left:100%;
 	width:100vw;
-	display:none;
+	display:none
 }
 #footer{
 	position:fixed;
 	bottom:0px;
 	width:100%;
-	line-height:1;
+	line-height:1
 }
 #cB{
-	padding-left:0.5rem;
+	padding-left:0.5rem
 }
 #cN{
 }
 #cIForm{
 	padding:3px 3px 0px 3px!important;
 	width:100%;
-	height:100px;
+	height:100px
 }
 #cI{
 	width:100%;
 	height:60%;
-	resize:none;
+	resize:none
 }
 #cI::placeholder{
-	font-weight:bold;
+	font-weight:bold
 }

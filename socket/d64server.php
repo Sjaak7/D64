@@ -29,7 +29,7 @@ class d64{
 		socket_bind($this->socketResource,0,PORT);
 		socket_listen($this->socketResource);
 
-		$this->consoleData = [
+		$this->consoleData['server'] = [
 			'activeConnections'	=> 0,
 			'connectionsIndex'	=> 0,
 			'massSendTime'		=> 0,
@@ -85,7 +85,7 @@ class d64{
 		$message = $this->encode($message,$type);
 		$messageLength = strlen($message);
 		if($everyone){
-			$this->consoleData['massSendTime'] = microtime(true);
+			$this->consoleData['server']['massSendTime'] = microtime(true);
 			foreach($this->clientSocketArray as $key => $clientSocket){
 				if($clientSocket===$this->socketResource || $except!==0 && $key===$except)
                         		continue;
@@ -105,7 +105,7 @@ class d64{
 						$this->clientInfoArray[$key][0] = $this->clientInfoArray[$key][0]+$this->pingTime;
 				}
 			}
-			$this->consoleData['massSendTime'] = microtime(true)-$this->consoleData['massSendTime'];
+			$this->consoleData['server']['massSendTime'] = microtime(true)-$this->consoleData['server']['massSendTime'];
 		}else @socket_write($this->clientSocketArray[$index],$message,$messageLength);
 		$this->sendCommand($type);
 		return true;
@@ -234,23 +234,23 @@ class d64{
 
 	private function receivedCommand(string $command) : void
 	{
-		$this->consoleData['lastReceivedCommand'] = $command;
+		$this->consoleData['server']['lastReceivedCommand'] = $command;
 		$this->console('New received');
 	}
 
 	private function sendCommand(string $command) : void
 	{
-		$this->consoleData['lastSendCommand'] = $command;
+		$this->consoleData['server']['lastSendCommand'] = $command;
 		$this->console('New send');
 	}
 
 	private function countConnections(bool $plusminus) : void
 	{
 		if($plusminus){
-			$this->consoleData['activeConnections']++;
-			$this->consoleData['connectionsIndex']++;
+			$this->consoleData['server']['activeConnections']++;
+			$this->consoleData['server']['connectionsIndex']++;
 			echo "\x07";
-		}else $this->consoleData['activeConnections']--;
+		}else $this->consoleData['server']['activeConnections']--;
 	}
 
 	private function console(string $msg) : void
@@ -258,21 +258,29 @@ class d64{
 		system('clear');
 		echo
 			"================================================================================\n".
-			' connections      : '.$this->consoleData['activeConnections']."\n".
-			' index            : '.$this->consoleData['connectionsIndex']."\n".
-			' last opcode      : '.$this->consoleData['lastOpcode']."\n".
+			' connections      : '.$this->consoleData['server']['activeConnections']."\n".
+			' index            : '.$this->consoleData['server']['connectionsIndex']."\n".
+			' last opcode      : '.$this->consoleData['server']['lastOpcode']."\n".
 			' clientsocketarr  : '.count($this->clientSocketArray)."\n".
 			' clientinfoarr    : '.count($this->clientInfoArray)."\n".
-			' last RX command  : '.$this->consoleData['lastReceivedCommand']."\n".
-			' last TX command  : '.$this->consoleData['lastSendCommand']."\n".
+			' last RX command  : '.$this->consoleData['server']['lastReceivedCommand']."\n".
+			' last TX command  : '.$this->consoleData['server']['lastSendCommand']."\n".
 			' system command   : '.$msg."\n".
-			' mass send time   : '.round(($this->consoleData['massSendTime']/1000),5)." s\n".
+			' mass send time   : '.round(($this->consoleData['server']['massSendTime']/1000),5)." s\n".
 			' memory           : '.round(memory_get_usage()/1048576,5)." MiB\n".
 			' memory (real)    : '.round(memory_get_usage(true)/1048576,2)." MiB\n".
 			' memory (peak)    : '.round(memory_get_peak_usage()/1048576,5)." MiB \n".
 			' module timer lag : '.$this->moduleTimerLag."\n".
 			' Directory        : '.__DIR__."\n";
-			//print_r($this->clientInfoArray)."\n";
+
+		if(isset($this->consoleData['module']))
+			foreach($this->consoleData['module'] as $key => $val)
+				echo ' '.$this->consoleData['module'][$key][0].':'.$this->consoleData['module'][$key][1]."\n";
+	}
+
+	public function addConsoleData(string $key, array $val) : void
+	{
+		$this->consoleData['module'][$key]=$val;
 	}
 
 	private function jsonValidator(string $msg)
@@ -290,7 +298,7 @@ class d64{
 	private function handleIncomingData(int $key, string $data) : void
 	{
 		$received = $this->decode($data);
-		$this->consoleData['lastOpcode'] = $received['opcode'];
+		$this->consoleData['server']['lastOpcode'] = $received['opcode'];
 		// received pong
 		if($received['opcode']===10)
 			$this->clientInfoArray[$key][2] = true;
@@ -314,10 +322,10 @@ class d64{
 
 	private function reIndexClientArrays() : void
 	{
-		if($this->consoleData['connectionsIndex']>=100){
+		if($this->consoleData['server']['connectionsIndex']>=100){
 			$this->clientSocketArray = [...$this->clientSocketArray];
 			$this->clientInfoArray = [...$this->clientInfoArray];
-			$this->consoleData['connectionsIndex']=0;
+			$this->consoleData['server']['connectionsIndex']=0;
 		}
 	}
 

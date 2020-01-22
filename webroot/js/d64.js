@@ -1,6 +1,6 @@
 var d64=(function(){
-// C = chat, S = socket, cI = chat input, tN = temp nick
-var C,S,o,hidden,visibilityChange,cI,tN,btcChat=true,startingX,scrollTimeout,apppage=false;
+// C = chat, S = socket
+var C,S,o,hidden,visibilityChange,chatInput,tempNick,chatChan="lobby",btcChat=true,startingX,scrollTimeout,apppage=false;
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
@@ -8,7 +8,7 @@ function wss(){
 			sC("life","green");
 			if(window.location.pathname==='/')
 				send(JSON.stringify({mod:"chat",rq:"init"}));
-			if(cI!==null)
+			if(chatInput!==null)
 				initChat();
 		};
 		S.onerror=(e)=>{
@@ -45,8 +45,8 @@ function chatParser(){
 	}
 	if(typeof(o.nicks)!=="undefined")
 		onlineNicks(o.nicks);
-	else if(typeof(o.qjb)!=="undefined"&&o.qjb===tN){
-		SC("chat",tN,100);
+	else if(typeof(o.qjb)!=="undefined"&&o.qjb===tempNick){
+		SC("chat",tempNick,100);
 		changeToInput();
 	}else if(typeof(o.err)!=="undefined"&&o.err==="dup_nick"){
 		chatPlaceholder("Deze nicknaam bestaat al, kies een andere..");
@@ -54,8 +54,8 @@ function chatParser(){
 	}
 }
 function chatPlaceholder(p){
-	cI.placeholder=p;
-	cI.value="";
+	chatInput.placeholder=p;
+	chatInput.value="";
 }
 function onlineNicks(n){
 	var output="";
@@ -141,7 +141,7 @@ function gC(cname){
 	return "";
 }
 function changeToInput(){
-	cI.setAttribute("maxlength",128);
+	chatInput.setAttribute("maxlength",128);
 	chatPlaceholder("Hoi "+gC("chat")+", type hier je bericht of type /help voor help");
 }
 function initChat(){
@@ -151,7 +151,7 @@ function initChat(){
 		changeToInput();
 }
 function checkNick(n,type){
-	if(n.match(/^([A-z0-9_-]{1,9})$/g)===null){
+	if(n.match(/^([a-zA-Z0-9_-]{1,9})$/g)===null){
 		if(checkNickLength(n,type))
 			checkNickInfo("Nicknaam mag alleen letters, cijfers en _ of - bevatten",type);
 		else return false;
@@ -168,21 +168,31 @@ function checkNick(n,type){
 	function checkNickInfo(m,type){
 		if(type==="init"){
 			chatPlaceholder(m);
-			cI.value="";
+			chatInput.value="";
 		}else{
 			chatStack({"n":"system","m":m});
-			cI.value="";
+			chatInput.value="";
 		}
 	}
 }
+function checkChannel(c){
+	if(c.match(/^[A-z]{3,9}$/g)){
+		cI.value="";
+		changeToInput();
+		return true;
+	}else{
+		chatPlaceholder("Geen geldige kanaal naam..");
+		return false;
+	}
+}
 function changeNick(n){
-	tN=n;
-        send(JSON.stringify({mod:"chat",rq:"nick",nick:tN}));
+	tempNick=n;
+        send(JSON.stringify({mod:"chat",rq:"nick",nick:tempNick}));
         chatPlaceholder("Nicknaam controleren..");
 }
 // connection status
 function chatConnStatus(){
-	if(cI!==null){
+	if(chatInput!==null){
 		if(S.readyState===S.CLOSED)
 			chatPlaceholder("Verbinding verbroken :( ik probeer opnieuw..");
 		else if(S.readyState===S.OPEN)
@@ -190,23 +200,28 @@ function chatConnStatus(){
 	}
 }
 function chatCommands(){
-	if(cI.value.match(/^\/nick\s/)){
-		cI.value=cI.value.replace(/^\/nick\s/,"");
-		if(checkNick(cI.value,"command"))
-			changeNick(cI.value);
+	if(chatInput.value.match(/^\/nick\s/)){
+		chatInput.value=chatInput.value.replace(/^\/nick\s/,"");
+		if(checkNick(chatInput.value,"command"))
+			changeNick(chatInput.value);
 		return true;
-	}else if(cI.value.match(/^\/help$/)){
+	}else if(chatInput.value.match(/^\/help$/)){
 		var help=[
 			"[D64] Help",
 			" ",
 			"De volgende commando's zijn beschikbaar:",
 			" ",
 			"/nick naam",
+			"/channel kanaal",
 			"/help"
 		];
 		for(var i in help)
 			chatStack({"n":"system","m":help[i]});
-		cI.value="";
+		chatInput.value="";
+		return true;
+	}else if(chatInput.value.match(/^\/channel\s/)){
+		if(checkChannel(chatInput.value.replace(/^\/channel\s/,"")))
+			send(JSON.stringify({mod:"chat",nC:"test"}));
 		return true;
 	}else return false;
 }
@@ -225,12 +240,23 @@ function initTouch(){
         p2.style.height=maxPanelHeight;
         p2.style.top=navOffset+"px";
 
-	p1.addEventListener("touchstart",start);
-	p1.addEventListener("touchmove",move);
-	p1.addEventListener("touchend",end);
+	removeListeners();
+	addListeners();
 
-	window.addEventListener('keyup',keyboard);
+	function addListeners(){
+		p1.addEventListener("touchstart",start);
+		p1.addEventListener("touchmove",move);
+		p1.addEventListener("touchend",end);
 
+		window.addEventListener('keyup',keyboard);
+	}
+	function removeListeners(){
+		p1.removeEventListener("touchstart",start);
+		p1.removeEventListener("touchmove",move);
+		p1.removeEventListener("touchend",end);
+
+		window.removeEventListener("keyup",end);
+	}
 	function keyboard(e){
                 if(e.key==='ArrowLeft'){
 			window.removeEventListener("keyup",keyboard);
@@ -268,10 +294,6 @@ function initTouch(){
                 }else{
 			endMove();
 
-			p1.removeEventListener("touchstart",start);
-			p1.removeEventListener("touchmove",move);
-			p1.removeEventListener("touchend",end);
-
 			scrollTimer();
 
 			initTouch();
@@ -306,6 +328,9 @@ document.addEventListener("DOMContentLoaded",()=>{
 	window.addEventListener("resize",()=>{
 		if(!apppage)
 			height();
+		else{
+			initTouch();
+		}
 		scrollDown();
 	});
 	if(document.location.pathname==='/'){
@@ -319,20 +344,20 @@ document.addEventListener("DOMContentLoaded",()=>{
 			else btcChat=false;
 		});
 	}
-	cI=document.getElementById("cI");
-	if(cI!==null){
+	chatInput=document.getElementById("cI");
+	if(chatInput!==null){
 		initChat();
-		cI.addEventListener("keyup",(e)=>{
-			if(e.keyCode===13&&cI.value!==""){
-				cI.value=removeLinebreaks(cI.value);
+		chatInput.addEventListener("keyup",(e)=>{
+			if(e.keyCode===13&&chatInput.value!==""){
+				chatInput.value=removeLinebreaks(chatInput.value);
 				// Set the nickname
 				if(gC("chat")===""){
-					if(checkNick(cI.value,"init"))
-						changeNick(cI.value);
-				}else if(checkNick(gC("chat"),"init")&&cI.value.trim().length>0){
+					if(checkNick(chatInput.value,"init"))
+						changeNick(chatInput.value);
+				}else if(checkNick(gC("chat"),"init")&&chatInput.value.trim().length>0){
 					if(!chatCommands()){
-						send(JSON.stringify({mod:"chat",cB:{n:gC("chat"),m:cI.value}}));
-						cI.value=""
+						send(JSON.stringify({mod:"chat",chan:chatChan,msg:{n:gC("chat"),m:chatInput.value}}));
+						chatInput.value=""
 					}
 				}
 			}

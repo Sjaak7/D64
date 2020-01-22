@@ -25,11 +25,15 @@ class chat64
 	public function incomingData(array $data, int $key) : void
 	{
 		if(isset($data['rq'])){
-			if($data['rq']==='init' && $data=$this->getChatData(true)){
-				$this->d64->send($data,false,$key);
-				// Send nick data to other users..
-				if(isset($this->d64->getClientInfoArray()[$key][3]))
-                			$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true,0,'text',$key);
+			if($data['rq']==='init'){
+				if(!isset($data['chan']))
+					$chan='lobby';
+				if($data=$this->getChatData($chan,true)){
+					$this->d64->send($data,false,$key);
+					// Send nick data to other users..
+					if(isset($this->d64->getClientInfoArray()[$key][3]))
+                				$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true,0,'text',$key);
+				}
 			}elseif($data['rq']==='nick'){
 				if(!$this->isDuplicateNick($data['nick'])){
 					$this->d64->addClientInfo(3,$data['nick'],$key);
@@ -39,13 +43,16 @@ class chat64
 					$this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
 				}
 			}
-		}elseif(isset($data['cB'])){
-			$this->handleChatData($data['cB'],$key);
+		}elseif(isset($data['msg'])){
+			$this->handleChatData($data,$key);
 		}elseif(isset($data['nN']) && $this->isValidNick($data['nN'])){
 			if(!$this->isDuplicateNick($data['nN'])){
 				$this->d64->addClientInfo(3,$data['nN'],$key);
 				$this->d64->send(json_encode(['nicks'=>$this->getNicks()]),true,0);
 			}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
+		}elseif(isset($data['nC'])){
+			$this->chatData['chan']['test']['chat']="test";
+			$this->d64->addConsoleData('chat',['channels',count($this->chatData['chan'])]);
 		}
 	}
 
@@ -60,17 +67,18 @@ class chat64
 	{
 		echo "Saving chat file\n";
 		$myfile = fopen("socket/chat.json", "w") or die("Unable to open file!");
-		fwrite($myfile,$this->getChatData(true));
+		$this->chatData['mod']='chat';
+		fwrite($myfile,json_encode($this->chatData));
 		fclose($myfile);
 	}
 
 	private function handleChatData(array $data, int $key) : void
 	{
-		if(isset($data['n']) && $data['n']===$this->d64->getClientInfoArray()[$key][3] && $data['m']<=128){
-			if(isset($this->chatData['chat']) && count($this->chatData['chat'])>29)
-				array_shift($this->chatData['chat']);
-			$this->chatData['chat'][] = ['n'=>$data['n'],'m'=>htmlentities($data[m])];
-			$this->sendChatData(false);
+		if(isset($data['msg']['n']) && $data['msg']['n']===$this->d64->getClientInfoArray()[$key][3] && $data['msg']['m']<=128){
+			if(isset($this->chatData['chan'][$data['chan']]['chat']) && count($this->chatData['chan'][$data['chan']]['chat'])>29)
+				array_shift($this->chatData['chan'][$data['chan']]['chat']);
+			$this->chatData['chan'][$data['chan']]['chat'][] = ['n'=>$data['msg']['n'],'m'=>htmlentities($data['msg']['m'])];
+			$this->sendChatData($data['chan'],false);
 		}else $this->closeConnection($key);
 	}
 
@@ -99,28 +107,28 @@ class chat64
 		else return false;
 	}
 
-	private function getChatData(bool $all)
+	private function getChatData(string $chan, bool $all)
 	{
-		if(isset($this->chatData)){
+		if(isset($this->chatData['chan'][$chan])){
 			$chat = [];
 			if($all){
-				foreach($this->chatData['chat'] as $row)
+				foreach($this->chatData['chan'][$chan]['chat'] as $row)
 					$chat[] = ['n'=>$row['n'],'m'=>$row['m']];
 			}else{
-				$lastRow = end($this->chatData['chat']);
+				$lastRow = end($this->chatData['chan'][$chan]['chat']);
 				$chat[] = ['n'=>$lastRow['n'],'m'=>$lastRow['m']];
 			}
-			$output = ['mod'=>'chat','chat'=>$chat];
+			$output = ['mod'=>'chat','chan'=>$chan,'chat'=>$chat];
 			if($nicks = $this->getNicks())
 				$output['nicks'] = $nicks;
 			return json_encode($output);
 		}else return false;
 	}
 
-	private function sendChatData(bool $all) : void
+	private function sendChatData(string $chan, bool $all) : void
 	{
-		if(isset($this->chatData))
-			$this->d64->send($this->getChatData($all),true);
+		if(isset($this->chatData['chan'][$chan]))
+			$this->d64->send($this->getChatData($chan,$all),true);
 	}
 }
 

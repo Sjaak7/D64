@@ -264,19 +264,13 @@ function initTouch(){
 		p1.removeEventListener("touchmove",move);
 		p1.removeEventListener("touchend",end);
 
-		window.removeEventListener("keyup",end);
+		window.removeEventListener("keyup",keyboard);
 	}
 	function keyboard(e){
                 if(e.key==='ArrowLeft'){
-			window.removeEventListener("keyup",keyboard);
 			clearTimeout(scrollTimeout);
 
 			endMove();
-
-			scrollTimer();
-
-			removeListeners();
-                        initTouch();
                 }
 	}
 	function start(e){
@@ -301,14 +295,7 @@ function initTouch(){
 
                         p2.style.left="100%";
                         p2.style.display="none";
-                }else{
-			endMove();
-
-			scrollTimer();
-
-			removeListeners();
-			initTouch();
-                }
+                }else endMove();
 	}
 	function endMove(){
 		p1.style.transition="all .3s";
@@ -321,6 +308,10 @@ function initTouch(){
 		p2.classList.add("visiblePage");
 		p2.classList.remove("hiddenPage");
 		p2.removeAttribute("style");
+
+		scrollTimer();
+		removeListeners();
+		initTouch();
 	}
 	function scrollTimer(){
 		scrollTimeout=setTimeout(function(){

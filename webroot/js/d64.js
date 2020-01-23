@@ -45,7 +45,7 @@ function chatParser(){
 	}
 	if(typeof(o.nicks)!=="undefined")
 		onlineNicks(o.nicks);
-	else if(typeof(o.qjb)!=="undefined"&&o.qjb===tempNick){
+	else if(typeof(o.acc_nick)!=="undefined"&&o.acc_nick===tempNick){
 		SC("chat",tempNick,100);
 		changeToInput();
 	}else if(typeof(o.err)!=="undefined"){
@@ -249,7 +249,7 @@ function initTouch(){
         p2.style.height=maxPanelHeight;
         p2.style.top=navOffset+"px";
 
-	removeListeners();
+//	removeListeners();
 	addListeners();
 
 	function addListeners(){
@@ -275,6 +275,7 @@ function initTouch(){
 
 			scrollTimer();
 
+			removeListeners();
                         initTouch();
                 }
 	}
@@ -305,6 +306,7 @@ function initTouch(){
 
 			scrollTimer();
 
+			removeListeners();
 			initTouch();
                 }
 	}

@@ -100,6 +100,8 @@ class d64{
 						}else
 							break;
 					}
+					if($type==='close')
+						$this->closeConnection($key);
 					// delay ping..
 					if(isset($this->clientInfoArray[$key]))
 						$this->clientInfoArray[$key][0] = $this->clientInfoArray[$key][0]+$this->pingTime;

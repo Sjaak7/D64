@@ -40,7 +40,7 @@ class chat64
 				if($this->isValidNick($data['nick'])){
 					if(!$this->isDuplicateNick($data['nick'])){
 						$this->d64->addClientInfo(3,$data['nick'],$key);
-						$this->d64->send(json_encode(['mod'=>'chat','qjb'=>$data['nick']]),false,$key);
+						$this->d64->send(json_encode(['mod'=>'chat','acc_nick'=>$data['nick']]),false,$key);
 						$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true);
 					}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'dup_nick']),false,$key);
 				}else $this->d64->send(json_encode(['mod'=>'chat','err'=>'ill_nick']),false,$key);

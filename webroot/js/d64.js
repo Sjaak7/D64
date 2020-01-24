@@ -241,15 +241,9 @@ function initTouch(){
 	var
 	p1=document.getElementsByClassName("visiblePage")[0],
 	p2=document.getElementsByClassName("hiddenPage")[0],
-	navOffset=document.getElementById("nav").offsetHeight,
-	maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-navOffset+"px";
+	navOffset,maxPanelHeight;
 
-	p1.style.height=maxPanelHeight;
-	p1.style.top=navOffset+"px";
-        p2.style.height=maxPanelHeight;
-        p2.style.top=navOffset+"px";
-
-//	removeListeners();
+	checkSetHeight();
 	addListeners();
 
 	function addListeners(){
@@ -265,6 +259,15 @@ function initTouch(){
 		p1.removeEventListener("touchend",end);
 
 		window.removeEventListener("keyup",keyboard);
+	}
+	function checkSetHeight(){
+		navOffset=document.getElementById("nav").offsetHeight,
+		maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-navOffset+"px";
+
+		p1.style.height=maxPanelHeight;
+		p1.style.top=navOffset+"px";
+		p2.style.height=maxPanelHeight;
+		p2.style.top=navOffset+"px";
 	}
 	function keyboard(e){
                 if(e.key==='ArrowLeft'){
@@ -314,7 +317,7 @@ function initTouch(){
 		initTouch();
 	}
 	function scrollTimer(){
-		scrollTimeout=setTimeout(function(){
+		scrollTimeout=setTimeout(()=>{
 			p2.scrollTo(0,document.getElementById(p2.id).scrollHeight);
 		},700);
 	}
@@ -330,9 +333,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 	window.addEventListener("resize",()=>{
 		if(!apppage)
 			height();
-		else{
-			initTouch();
-		}
+		else initTouch();
 		scrollDown();
 	});
 	if(document.location.pathname==='/'){

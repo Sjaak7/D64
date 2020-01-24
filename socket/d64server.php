@@ -209,7 +209,6 @@ class d64{
 		return $frame;
 	}
 
-
 	private function handshake(string $received_header, $client_socket_resource, int $key) : array
 	{
 		$headers = [];
@@ -223,14 +222,11 @@ class d64{
 		// See RFC6455 Page 7
 		$secAccept = base64_encode(pack('H*',sha1($secKey.'258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
 		$buffer  =
-			"HTTP/1.1 101 Web Socket Protocol Handshake\r\n".
+			"HTTP/1.1 101 Switching Protocols\r\n".
 			"Upgrade: websocket\r\n".
 			"Connection: Upgrade\r\n".
-			"WebSocket-Origin: ".HOST_NAME."\r\n".
-			"WebSocket-Location: ws://".HOST_NAME.":".PORT."/live\r\n".
 			"Sec-WebSocket-Accept:$secAccept\r\n\r\n";
 		socket_write($client_socket_resource,$buffer,strlen($buffer));
-		//echo print_r($headers);exit();
 		return $headers;
 	}
 

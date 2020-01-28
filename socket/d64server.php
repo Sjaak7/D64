@@ -1,7 +1,5 @@
 <?php
 
-//error_reporting(E_ALL);
-
 set_time_limit(0);
 ob_implicit_flush();
 
@@ -83,23 +81,16 @@ class d64{
 	public function send(string $message,bool $everyone,int $index = 0,string $type = 'text',int $except = 0) : bool
 	{
 		$message = $this->encode($message,$type);
-		$messageLength = strlen($message);
 		if($everyone){
 			$this->consoleData['server']['massSendTime'] = microtime(true);
 			foreach($this->clientSocketArray as $key => $clientSocket){
 				if($clientSocket===$this->socketResource || $except!==0 && $key===$except)
                         		continue;
 				else{
-					while(true){
-						$sent = socket_write($this->clientSocketArray[$key],$message,$messageLength);
-						if(!$sent)
-							return false;
-						elseif($sent<$messageLength){
-							$message = substr($message,$messageLength);
-							$messageLength -= $sent;
-						}else
-							break;
-					}
+				//	while(true){
+						foreach($message as $fragVal)
+							$sent = @socket_write($this->clientSocketArray[$key],$fragVal,strlen($fragVal));
+				//	}
 					if($type==='close')
 						$this->closeConnection($key);
 					// delay ping..
@@ -108,7 +99,10 @@ class d64{
 				}
 			}
 			$this->consoleData['server']['massSendTime'] = microtime(true)-$this->consoleData['server']['massSendTime'];
-		}else @socket_write($this->clientSocketArray[$index],$message,$messageLength);
+		}else{
+			foreach($message as $fragVal)
+				@socket_write($this->clientSocketArray[$index],$fragVal,strlen($fragVal));
+		}
 		$this->sendCommand($type);
 		return true;
 	}
@@ -122,9 +116,9 @@ class d64{
 			'codedData'	=>'',
 			'decodedData'	=>'',
 			'opcode'	=>ord($data[0]) & 0xf,
-			'secondByte'	=>sprintf('%08b',ord($bytes[1]))
+			'secondByte'	=>decbin(ord($bytes[1]))
 		];
-		$masked = ($d['secondByte'][0]=='1') ? true : false;
+		$masked = ($d['secondByte'][0]==='1') ? true : false;
 		$d['dataLength'] = ($masked===true) ? ord($bytes[1]) & 127 : ord($bytes[1]);
 		if($masked){
 			if($d['dataLength']===126){
@@ -146,66 +140,71 @@ class d64{
 				$d['decodedData'] = substr($bytes,10);
 			else $d['decodedData'] = substr($bytes,2);
 		}
-		return ['opcode'=>$d['opcode'],'data'=>$d['decodedData'],'masked'=>$masked];
+		return ['opcode'=>$d['opcode'],'data'=>$d['decodedData']];
 	}
 
 	// A server MUST NOT mask any frames that it sends to the client
 
-	private function encode(string $payload, $type = 'text', $masked = false)
+	private function encode(string $payload, string $type = 'text') : array
 	{
-		$frameHead = array();
-		$frame = '';
-		$payloadLength = strlen($payload);
+		$payloadMax = 16;
+
+		$fragmentedPayload = str_split($payload,$payloadMax);
+
+		$frameHead = [];
+		$frame = [];
 		switch($type){
 			case 'text' :
-				// first byte indicates FIN, Text-Frame (10000001):
-				$frameHead[0] = 129;
+				// first byte indicates FIN, Text-Frame (10000001) dec: 129:
+			//	$frameHead[0] = bindec($finBit.'0000001');
 				break;
 			case 'close' :
-				// first byte indicates FIN, Close Frame(10001000):
-				$frameHead[0] = 136;
+				// first byte indicates FIN, Close Frame(10001000) dec: 136:
+			//	$frameHead[0] = bindec('10001000');
 				break;
 			case 'ping' :
-				// first byte indicates FIN, Ping frame (10001001):
-				$frameHead[0] = 137;
+				// first byte indicates FIN, Ping frame (10001001): dec: 137:
+			//	$frameHead[0] = bindec('10001001');
 				break;
 			case 'pong' :
-				// first byte indicates FIN, Pong frame (10001010):
-				$frameHead[0] = 138;
+				// first byte indicates FIN, Pong frame (10001010): dec: 138:
+			//	$frameHead[0] = bindec('10001010');
 				break;
 		}
-		// set mask and payload length (using 1, 3 or 9 bytes)
-		if($payloadLength>65535){
-			$payloadLengthBin = str_split(sprintf('%064b',$payloadLength),8);
-			$frameHead[1] = ($masked===true) ? 255 : 127;
-			for($i=0; $i<8; $i++)
-				$frameHead[$i+2] = bindec($payloadLengthBin[$i]);
-			// most significant bit MUST be 0 (close connection if frame too big)
-			if($frameHead[2]>127){
-				$this->close(1004);
-				return false;
+		foreach($fragmentedPayload as $key => $val){
+			$payloadLength = strlen($val);
+			// set mask and payload length (using 1, 3 or 9 bytes)
+			if($type==='text'){
+				if(count($fragmentedPayload)>1){
+					if($key===0)
+						$frameHead[$key][0] = bindec('00000001');
+					elseif($key===count($fragmentedPayload)-1)
+						$frameHead[$key][0] = bindec('10000000');
+					else $frameHead[$key][0] = bindec('00000000');
+				}else
+					$frameHead[$key][0] = bindec('10000001');
 			}
-		}elseif($payloadLength>125){
-			$payloadLengthBin = str_split(sprintf('%016b',$payloadLength),8);
-			$frameHead[1] = ($masked===true) ? 254 : 126;
-			$frameHead[2] = bindec($payloadLengthBin[0]);
-			$frameHead[3] = bindec($payloadLengthBin[1]);
-		}else
-			$frameHead[1] = ($masked===true) ? $payloadLength + 128 : $payloadLength;
-		// convert frame-head to string:
-		foreach(array_keys($frameHead) as $i)
-			$frameHead[$i] = chr($frameHead[$i]);
-		if($masked===true){
-			// generate a random mask:
-			$mask = array();
-			for($i=0;$i<4;$i++)
-				$mask[$i] = chr(rand(0, 255));
-			$frameHead = array_merge($frameHead,$mask);
+			if($payloadLength>65535){
+				$payloadLengthBin = str_split(sprintf('%064b',$payloadLength),8);
+				$frameHead[$key][1] = 127;
+				for($i=0; $i<8; $i++)
+					$frameHead[$key][$i+2] = bindec($payloadLengthBin[$i]);
+			}elseif($payloadLength>125){
+				$payloadLengthBin = str_split(sprintf('%016b',$payloadLength),8);
+				$frameHead[$key][1] = 126;
+				$frameHead[$key][2] = bindec($payloadLengthBin[0]);
+				$frameHead[$key][3] = bindec($payloadLengthBin[1]);
+			}else
+				$frameHead[$key][1] = $payloadLength;
+			// convert frame-head to string:
+			foreach(array_keys($frameHead[$key]) as $i)
+				$frameHead[$key][$i] = chr($frameHead[$key][$i]);
+			$frame[$key] = implode('',$frameHead[$key]);
+			// append payload to frame:
+			for($i=0; $i<$payloadLength; $i++)
+				$frame[$key] .= $val[$i];
+			echo $frame[$key]."\n";
 		}
-		$frame = implode('',$frameHead);
-		// append payload to frame:
-		for($i=0; $i<$payloadLength; $i++)
-			$frame .= ($masked===true) ? $payload[$i] ^ $mask[$i % 4] : $payload[$i];
 		return $frame;
 	}
 

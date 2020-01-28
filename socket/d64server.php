@@ -87,10 +87,8 @@ class d64{
 				if($clientSocket===$this->socketResource || $except!==0 && $key===$except)
                         		continue;
 				else{
-				//	while(true){
-						foreach($message as $fragVal)
-							$sent = @socket_write($this->clientSocketArray[$key],$fragVal,strlen($fragVal));
-				//	}
+					foreach($message as $fragVal)
+						$sent = @socket_write($this->clientSocketArray[$key],$fragVal,strlen($fragVal));
 					if($type==='close')
 						$this->closeConnection($key);
 					// delay ping..
@@ -153,57 +151,59 @@ class d64{
 
 		$frameHead = [];
 		$frame = [];
+
 		switch($type){
-			case 'text' :
-				// first byte indicates FIN, Text-Frame (10000001) dec: 129:
-			//	$frameHead[0] = bindec($finBit.'0000001');
-				break;
 			case 'close' :
 				// first byte indicates FIN, Close Frame(10001000) dec: 136:
-			//	$frameHead[0] = bindec('10001000');
+				$binHead = bindec('10001000');
 				break;
 			case 'ping' :
 				// first byte indicates FIN, Ping frame (10001001): dec: 137:
-			//	$frameHead[0] = bindec('10001001');
+				$binHead = bindec('10001001');
 				break;
 			case 'pong' :
 				// first byte indicates FIN, Pong frame (10001010): dec: 138:
-			//	$frameHead[0] = bindec('10001010');
+				$binHead = bindec('10001010');
 				break;
 		}
-		foreach($fragmentedPayload as $key => $val){
-			$payloadLength = strlen($val);
+
+		$frames = count($fragmentedPayload);
+
+		for($i=0;$i<$frames;$i++){
+			$key = $i;
+			$payloadLength = strlen($fragmentedPayload[$i]);
 			// set mask and payload length (using 1, 3 or 9 bytes)
 			if($type==='text'){
-				if(count($fragmentedPayload)>1){
-					if($key===0)
-						$frameHead[$key][0] = bindec('00000001');
-					elseif($key===count($fragmentedPayload)-1)
-						$frameHead[$key][0] = bindec('10000000');
-					else $frameHead[$key][0] = bindec('00000000');
+				if($frames>1){
+					if($i===0)
+						$frameHead[$i][0] = bindec('00000001');
+					elseif($key===$frames-1)
+						$frameHead[$i][0] = bindec('10000000');
+					else
+						$frameHead[$i][0] = bindec('00000000');
 				}else
-					$frameHead[$key][0] = bindec('10000001');
-			}
+					$frameHead[$i][0] = bindec('10000001');
+			}else $frameHead[$i][0] = $binHead;
+
 			if($payloadLength>65535){
 				$payloadLengthBin = str_split(sprintf('%064b',$payloadLength),8);
-				$frameHead[$key][1] = 127;
-				for($i=0; $i<8; $i++)
-					$frameHead[$key][$i+2] = bindec($payloadLengthBin[$i]);
+				$frameHead[$i][1] = 127;
+				for($j=0;$j<8;$j++)
+					$frameHead[$i][$j+2] = bindec($payloadLengthBin[$j]);
 			}elseif($payloadLength>125){
 				$payloadLengthBin = str_split(sprintf('%016b',$payloadLength),8);
-				$frameHead[$key][1] = 126;
-				$frameHead[$key][2] = bindec($payloadLengthBin[0]);
-				$frameHead[$key][3] = bindec($payloadLengthBin[1]);
+				$frameHead[$i][1] = 126;
+				$frameHead[$i][2] = bindec($payloadLengthBin[0]);
+				$frameHead[$i][3] = bindec($payloadLengthBin[1]);
 			}else
-				$frameHead[$key][1] = $payloadLength;
+				$frameHead[$i][1] = $payloadLength;
 			// convert frame-head to string:
-			foreach(array_keys($frameHead[$key]) as $i)
-				$frameHead[$key][$i] = chr($frameHead[$key][$i]);
-			$frame[$key] = implode('',$frameHead[$key]);
+			foreach(array_keys($frameHead[$i]) as $j)
+				$frameHead[$i][$j] = chr($frameHead[$i][$j]);
+			$frame[$i] = implode('',$frameHead[$i]);
 			// append payload to frame:
-			for($i=0; $i<$payloadLength; $i++)
-				$frame[$key] .= $val[$i];
-			echo $frame[$key]."\n";
+			for($j=0;$j<$payloadLength;$j++)
+				$frame[$i] .= $fragmentedPayload[$i][$j];
 		}
 		return $frame;
 	}

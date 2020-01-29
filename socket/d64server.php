@@ -88,7 +88,7 @@ class d64{
                         		continue;
 				else{
 					foreach($message as $fragVal)
-						$sent = @socket_write($this->clientSocketArray[$key],$fragVal,strlen($fragVal));
+						$sent = @socket_write($this->clientSocketArray[$key],$fragVal['frame'],$fragVal['length']);
 					if($type==='close')
 						$this->closeConnection($key);
 					// delay ping..
@@ -99,7 +99,7 @@ class d64{
 			$this->consoleData['server']['massSendTime'] = microtime(true)-$this->consoleData['server']['massSendTime'];
 		}else{
 			foreach($message as $fragVal)
-				@socket_write($this->clientSocketArray[$index],$fragVal,strlen($fragVal));
+				@socket_write($this->clientSocketArray[$index],$fragVal['frame'],$fragVal['length']);
 		}
 		$this->sendCommand($type);
 		return true;
@@ -145,7 +145,7 @@ class d64{
 
 	private function encode(string $payload, string $type = 'text') : array
 	{
-		$payloadMax = 16;
+		$payloadMax = 128;
 
 		$fragmentedPayload = str_split($payload,$payloadMax);
 
@@ -170,14 +170,13 @@ class d64{
 		$frames = count($fragmentedPayload);
 
 		for($i=0;$i<$frames;$i++){
-			$key = $i;
 			$payloadLength = strlen($fragmentedPayload[$i]);
 			// set mask and payload length (using 1, 3 or 9 bytes)
 			if($type==='text'){
 				if($frames>1){
 					if($i===0)
 						$frameHead[$i][0] = bindec('00000001');
-					elseif($key===$frames-1)
+					elseif($i===$frames-1)
 						$frameHead[$i][0] = bindec('10000000');
 					else
 						$frameHead[$i][0] = bindec('00000000');
@@ -200,10 +199,11 @@ class d64{
 			// convert frame-head to string:
 			foreach(array_keys($frameHead[$i]) as $j)
 				$frameHead[$i][$j] = chr($frameHead[$i][$j]);
-			$frame[$i] = implode('',$frameHead[$i]);
+			$frame[$i]['frame'] = implode('',$frameHead[$i]);
 			// append payload to frame:
 			for($j=0;$j<$payloadLength;$j++)
-				$frame[$i] .= $fragmentedPayload[$i][$j];
+				$frame[$i]['frame'] .= $fragmentedPayload[$i][$j];
+			$frame[$i]['length'] = strlen($frame[$i]['frame']);
 		}
 		return $frame;
 	}

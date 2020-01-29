@@ -88,21 +88,26 @@ class d64{
                         		continue;
 				else{
 					foreach($message as $fragVal)
-						$sent = @socket_write($this->clientSocketArray[$key],$fragVal['frame'],$fragVal['length']);
+						$sent = socket_write($this->clientSocketArray[$key],$fragVal['frame'],$fragVal['length']);
 					if($type==='close')
 						$this->closeConnection($key);
-					// delay ping..
-					if(isset($this->clientInfoArray[$key]))
-						$this->clientInfoArray[$key][0] = $this->clientInfoArray[$key][0]+$this->pingTime;
+					$this->delayPing($key);
 				}
 			}
 			$this->consoleData['server']['massSendTime'] = microtime(true)-$this->consoleData['server']['massSendTime'];
 		}else{
 			foreach($message as $fragVal)
-				@socket_write($this->clientSocketArray[$index],$fragVal['frame'],$fragVal['length']);
+				socket_write($this->clientSocketArray[$index],$fragVal['frame'],$fragVal['length']);
+			$this->delayPing($index);
 		}
 		$this->sendCommand($type);
 		return true;
+	}
+
+	private function delayPing(int $key) : void
+	{
+		if(isset($this->clientInfoArray[$key]))
+			$this->clientInfoArray[$key][0] = $this->clientInfoArray[$key][0]+$this->pingTime;
 	}
 
 	private function decode(string $data) : array

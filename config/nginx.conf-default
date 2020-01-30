@@ -170,9 +170,9 @@ ssl_session_timeout 5m;
 			# prevents 502 bad gateway error
 			proxy_buffers 8 32k;
 			proxy_buffer_size 64k;
-#			if ($http_origin ~ '^https://d64.nl') {
+			if ($http_origin ~ '^https://d64.nl') {
 				proxy_pass http://Socket:8080;
-#			}
+			}
 			proxy_redirect off;
 
 			# enables WS support

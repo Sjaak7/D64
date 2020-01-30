@@ -1,6 +1,6 @@
 var d64=(function(){
 // C = chat, S = socket
-var C,S,o,hidden,visibilityChange,chatInput,tempNick,chatChan="lobby",btcChat=true,startingX,scrollTimeout,apppage=false,version="0.0.3";
+var C,S,o,hidden,visibilityChange,chatInput,tempNick,chatChan="lobby",btcChat=true,startingX,scrollTimeout,apppage=false,version="0.0.4";
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
@@ -55,7 +55,12 @@ function chatParser(){
 		}else if(o.err==="ill_nick"){
 			chatPlaceholder("Nicknaam bevat illegale karakters");
 			removeCookie();
-		}
+		}else if(o.err==="dup_chan"){
+			chatStack({"n":"system","m":"Gekozen kanaal bestaat al"});
+		}else if(o.err==="ill_chan")
+			chatStack({"n":"system","m":"Kanaalnaam mag alleen letters bevatten, minimaal 3 karakters, maximaal 9"});
+	}else if(typeof(o.acc_chan)!=="undefined"){
+		//alert('lets create a channel!');
 	}
 }
 function removeCookie(){
@@ -189,7 +194,7 @@ function checkChannel(c){
 		changeToInput();
 		return true;
 	}else{
-		chatPlaceholder("Geen geldige kanaal naam..");
+		chatStack({"n":"system","m":"Geen geldige kanaal naam.."});
 		return false;
 	}
 }
@@ -307,10 +312,12 @@ function initTouch(){
                         p2.style.display="none";
                 }else endMove();
 	}
-	function endMove(){
-		p1.style.transition="all .3s";
-		p2.style.transition="all .3s";
-		p1.style.left="-100%";
+	function endMove(change){
+	//	p1.style.transition="all .3s";
+	//	p2.style.transition="all .3s";
+		if(change>0)
+			p1.style.left="-100%";
+		else p1.style.left=screen.width;
 
 		p1.classList.add("hiddenPage");
 		p1.classList.remove("visiblePage");
@@ -343,7 +350,8 @@ document.addEventListener("DOMContentLoaded",()=>{
 		else initTouch();
 		scrollDown();
 	});
-	document.getElementById("version").innerHTML=version;
+	if(document.getElementById("version"))
+		document.getElementById("version").innerHTML=version;
 	if(document.location.pathname==='/'){
 		apppage=true;
 		initTouch();

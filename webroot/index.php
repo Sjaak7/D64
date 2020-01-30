@@ -39,7 +39,10 @@ if(!isset($d64->path[0]) && empty($_SERVER['QUERY_STRING'])){
 	$d64->footer->setFooter(
 		'<div id="cIForm">'.
 			'<textarea id="cI" maxlength="9" wrap="soft"></textarea>'.
-			'<div><input type="checkbox" class="w3-check" id="btc" checked> <label for="btc">BTC updates</label></div>'.
+			'<div>'.
+				'<input type="checkbox" class="w3-check" id="btc" checked> <label for="btc">BTC updates</label>'.
+				'<span class="w3-right">v<span id="version"></span></span>'.
+			'</div>'.
 		'</div>'
 	);
 }elseif($d64->path[0]==='offline'){

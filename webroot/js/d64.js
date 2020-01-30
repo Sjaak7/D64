@@ -1,6 +1,6 @@
 var d64=(function(){
 // C = chat, S = socket
-var C,S,o,hidden,visibilityChange,chatInput,tempNick,chatChan="lobby",btcChat=true,startingX,scrollTimeout,apppage=false;
+var C,S,o,hidden,visibilityChange,chatInput,tempNick,chatChan="lobby",btcChat=true,startingX,scrollTimeout,apppage=false,version="0.0.3";
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
@@ -198,7 +198,6 @@ function changeNick(n){
         send(JSON.stringify({mod:"chat",rq:"nick",nick:tempNick}));
         chatPlaceholder("Nicknaam controleren..");
 }
-// connection status
 function chatConnStatus(){
 	if(chatInput!==null){
 		if(S.readyState===S.CLOSED)
@@ -282,18 +281,26 @@ function initTouch(){
 	}
 	function move(e){
                 var touch=e.touches[0],change=startingX-touch.clientX;
-                p1.style.left="-"+change+"px";
 
-                if(change<0)
-                        return;
-
-                p1.style.left="-"+change+"px";
-                p2.style.display="block";
-                p2.style.left=(screen.width-change)+"px";
+                if(change<0){
+			swipeRight(Math.abs(change));
+		}else{
+			swipeLeft(change);
+		}
+	}
+	function swipeRight(change){
+		p1.style.left="+"+change+"px";
+		p2.style.display="block";
+		p2.style.left=(-screen.width+change)+"px";
+	}
+	function swipeLeft(change){
+		p1.style.left="-"+change+"px";
+		p2.style.display="block";
+		p2.style.left=(screen.width-change)+"px";
 	}
 	function end(e){
                 var change=startingX-e.changedTouches[0].clientX,threshold=screen.width/3;
-                if(change<threshold){
+                if(Math.abs(change)<threshold){
                         p1.style.left=0;
 
                         p2.style.left="100%";
@@ -336,6 +343,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 		else initTouch();
 		scrollDown();
 	});
+	document.getElementById("version").innerHTML=version;
 	if(document.location.pathname==='/'){
 		apppage=true;
 		initTouch();

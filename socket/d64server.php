@@ -33,7 +33,8 @@ class d64{
 			'massSendTime'		=> 0,
 			'lastReceivedCommand'	=> '',
 			'lastSendCommand'	=> '',
-			'lastOpcode'		=> ''
+			'lastOpcode'		=> '',
+			'lastSendFrameCount'	=> 0
 			];
 
 		pcntl_async_signals(true);
@@ -48,7 +49,7 @@ class d64{
 		echo "DOES THIS WORK?\n IT actually does in some cases..";
 	}
 
-	public function registerModule(array $module)
+	public function registerModule(array $module) : void
 	{
 		$this->module[$module['name']]['mod'] = new $module['name']($this);
 		if(isset($module['hook']))
@@ -59,7 +60,7 @@ class d64{
 			$this->module[$module['name']]['end']=$module['end'];
 	}
 
-	private function checkModuleHook(string $hook)
+	private function checkModuleHook(string $hook) : array
 	{
 		foreach($this->module as $module => $val)
 			if(isset($val['hook']))
@@ -69,7 +70,7 @@ class d64{
 		return $modules;
 	}
 
-	private function moduleTimers()
+	private function moduleTimers() : void
 	{
 		foreach($this->module as $module => $val)
 			if(isset($val['timer'])){
@@ -150,7 +151,7 @@ class d64{
 
 	private function encode(string $payload, string $type = 'text') : array
 	{
-		$payloadMax = 128;
+		$payloadMax = 16;
 
 		$fragmentedPayload = str_split($payload,$payloadMax);
 
@@ -179,10 +180,13 @@ class d64{
 			// set mask and payload length (using 1, 3 or 9 bytes)
 			if($type==='text'){
 				if($frames>1){
+					// First frame without the FIN bit
 					if($i===0)
 						$frameHead[$i][0] = bindec('00000001');
+					// End frame with FIN bit set
 					elseif($i===$frames-1)
 						$frameHead[$i][0] = bindec('10000000');
+					// Middle frames
 					else
 						$frameHead[$i][0] = bindec('00000000');
 				}else
@@ -210,6 +214,7 @@ class d64{
 				$frame[$i]['frame'] .= $fragmentedPayload[$i][$j];
 			$frame[$i]['length'] = strlen($frame[$i]['frame']);
 		}
+		$this->consoleData['server']['lastSendFrameCount']=$i;
 		return $frame;
 	}
 
@@ -234,13 +239,13 @@ class d64{
 		return $headers;
 	}
 
-	private function receivedCommand(string $command) : void
+	public function receivedCommand(string $command) : void
 	{
 		$this->consoleData['server']['lastReceivedCommand'] = $command;
 		$this->console('New received');
 	}
 
-	private function sendCommand(string $command) : void
+	public function sendCommand(string $command) : void
 	{
 		$this->consoleData['server']['lastSendCommand'] = $command;
 		$this->console('New send');
@@ -267,6 +272,7 @@ class d64{
 			' clientinfoarr    : '.count($this->clientInfoArray)."\n".
 			' last RX command  : '.$this->consoleData['server']['lastReceivedCommand']."\n".
 			' last TX command  : '.$this->consoleData['server']['lastSendCommand']."\n".
+			' last TX frames   : '.$this->consoleData['server']['lastSendFrameCount']."\n".
 			' system command   : '.$msg."\n".
 			' mass send time   : '.round(($this->consoleData['server']['massSendTime']/1000),5)." s\n".
 			' memory           : '.round(memory_get_usage()/1048576,5)." MiB\n".

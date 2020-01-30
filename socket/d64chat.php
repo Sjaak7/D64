@@ -36,6 +36,7 @@ class chat64
 					if(isset($this->d64->getClientInfoArray()[$key][3]))
                 				$this->d64->send(json_encode(['mod'=>'chat','nicks'=>$this->getNicks()]),true,0,'text',$key);
 				}
+				$this->d64->receivedCommand('Chat:init');
 			}elseif($data['rq']==='nick'){
 				if($this->isValidNick($data['nick'])){
 					if(!$this->isDuplicateNick($data['nick'])){

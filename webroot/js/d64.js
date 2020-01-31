@@ -1,26 +1,40 @@
 var d64=(function(){
 // C = chat, S = socket
-var C,S,o,hidden,visibilityChange,chatInput,tempNick,chatChan="lobby",btcChat=true,startingX,scrollTimeout,apppage=false,version="0.0.4";
+var
+	C,
+	S,
+	o,
+	hidden,
+	visibilityChange,
+	chatInput,
+	tempNick,
+	chatChan="lobby",
+	btcChat=true,
+	startingX,
+	scrollTimeout,
+	apppage=false,
+	version="0.0.4";
+
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
 		S.onopen=()=>{
-			sC("life","green");
+			setColor("life","green");
 			if(window.location.pathname==='/')
 				send(JSON.stringify({mod:"chat",rq:"init"}));
 			if(chatInput!==null)
-				initChat();
+				initChatInput();
 		};
 		S.onerror=(e)=>{
 			l(e);
 		};
 		S.onmessage=(m)=>{
-			sC("life","#ff0");
-			v(m.data);
+			setColor("life","#ff0");
+			validate(m.data);
 			l(m.data)
 		};
 		S.onclose=()=>{
-			sC("life","red");
+			setColor("life","red");
 			chatConnStatus();
 			if(!document[hidden])
 				setTimeout(wss,1000);
@@ -33,7 +47,7 @@ function l(m){
 	console.log(m)
 }
 function send(m){
-	sC("life","blue");
+	setColor("life","blue");
 	S.send(m)
 }
 function chatParser(){
@@ -46,7 +60,7 @@ function chatParser(){
 	if(typeof(o.nicks)!=="undefined")
 		onlineNicks(o.nicks);
 	else if(typeof(o.acc_nick)!=="undefined"&&o.acc_nick===tempNick){
-		SC("chat",tempNick,100);
+		setCookie("chat",tempNick,100);
 		changeToInput();
 	}else if(typeof(o.err)!=="undefined"){
 		if(o.err==="dup_nick"){
@@ -92,16 +106,15 @@ function chatPrint(){
 	document.getElementById("cB").innerHTML=x;
 	scrollDown();
 }
-// Validate
-function v(d){
+function validate(d){
 	try{
 		o=JSON.parse(d);
 		if(apppage&&typeof(o.mod)!=="undefined"&&o.mod==="btc"&&btcChat===true){
 			chatStack({"n":"btc-bot","m":"&euro; "+o.btc_euro});
-			sC("life","green");
+			setColor("life","green");
 		}else if(apppage&&typeof(o.mod)!=="undefined"&&o.mod==="chat"){
 			chatParser();
-			sC("life","green");
+			setColor("life","green");
 		}
 	}catch(e){
 		l(e);
@@ -111,8 +124,7 @@ function scrollDown(){
 	content=document.getElementById("cFrame");
 	document.getElementById("p1").scrollTo(0,content.scrollHeight);
 }
-// set color
-function sC(i,c){
+function setColor(i,c){
 	document.getElementById(i).style.color=c
 }
 // visibility
@@ -134,15 +146,13 @@ function handleVisibilityChange(){
 }
 if(typeof(document.addEventListener)!=="undefined"||hidden===undefined)
 	document.addEventListener(visibilityChange,handleVisibilityChange,false);
-// setCookie
-function SC(cn,cv,exd){
+function setCookie(cn,cv,exd){
 	var d=new Date(),exp;
 	d.setTime(d.getTime()+(exd*24*60*60*1000));
 	exp="expires="+d.toUTCString();
 	document.cookie=cn+"="+cv+";"+exp+";path=/;secure";
 }
-// getCookie
-function gC(cname){
+function getCookie(cname){
 	var name=cname+"=",decodedCookie=decodeURIComponent(document.cookie),ca=decodedCookie.split(";"),i;
 	for(i=0;i<ca.length;i++){
 		var c=ca[i];
@@ -153,14 +163,32 @@ function gC(cname){
 	}
 	return "";
 }
+function initChat(){
+	initChatInput();
+	chatInput.addEventListener("keyup",(e)=>{
+	if(e.keyCode===13&&chatInput.value!==""){
+		chatInput.value=removeLinebreaks(chatInput.value);
+		// Set the nickname
+		if(getCookie("chat")===""){
+			if(checkNick(chatInput.value,"init"))
+				changeNick(chatInput.value);
+			}else if(checkNick(getCookie("chat"),"init")&&chatInput.value.trim().length>0){
+				if(!chatCommands()){
+					send(JSON.stringify({mod:"chat",chan:chatChan,msg:{n:getCookie("chat"),m:chatInput.value}}));
+					chatInput.value=""
+				}
+			}
+		}
+	});
+}
 function changeToInput(){
 	chatInput.setAttribute("maxlength",128);
-	chatPlaceholder("Hoi "+gC("chat")+", type hier je bericht of type /help voor help");
+	chatPlaceholder("Hoi "+getCookie("chat")+", type hier je bericht of type /help voor help");
 }
-function initChat(){
-	if(gC("chat")==="")
+function initChatInput(){
+	if(getCookie("chat")==="")
 		chatPlaceholder("Type eerst je nicknaam..");
-	else if(checkNick(gC("chat"),"init"))
+	else if(checkNick(getCookie("chat"),"init"))
 		changeToInput();
 }
 function checkNick(n,type){
@@ -208,7 +236,7 @@ function chatConnStatus(){
 		if(S.readyState===S.CLOSED)
 			chatPlaceholder("Verbinding verbroken :( ik probeer opnieuw..");
 		else if(S.readyState===S.OPEN)
-			initChat();
+			initChatInput();
 	}
 }
 function chatCommands(){
@@ -344,6 +372,10 @@ function height(){
 	content.style.top=document.getElementById("nav").offsetHeight+"px";
 }
 document.addEventListener("DOMContentLoaded",()=>{
+	if(document.location.pathname==='/'){
+		apppage=true;
+		initTouch();
+	}else height();
 	window.addEventListener("resize",()=>{
 		if(!apppage)
 			height();
@@ -352,10 +384,6 @@ document.addEventListener("DOMContentLoaded",()=>{
 	});
 	if(document.getElementById("version"))
 		document.getElementById("version").innerHTML=version;
-	if(document.location.pathname==='/'){
-		apppage=true;
-		initTouch();
-	}else height();
 	if(document.getElementById("btc")){
 		document.getElementById("btc").addEventListener("change",()=>{
 			if(this.checked)
@@ -364,24 +392,8 @@ document.addEventListener("DOMContentLoaded",()=>{
 		});
 	}
 	chatInput=document.getElementById("cI");
-	if(chatInput!==null){
+	if(chatInput)
 		initChat();
-		chatInput.addEventListener("keyup",(e)=>{
-			if(e.keyCode===13&&chatInput.value!==""){
-				chatInput.value=removeLinebreaks(chatInput.value);
-				// Set the nickname
-				if(gC("chat")===""){
-					if(checkNick(chatInput.value,"init"))
-						changeNick(chatInput.value);
-				}else if(checkNick(gC("chat"),"init")&&chatInput.value.trim().length>0){
-					if(!chatCommands()){
-						send(JSON.stringify({mod:"chat",chan:chatChan,msg:{n:gC("chat"),m:chatInput.value}}));
-						chatInput.value=""
-					}
-				}
-			}
-		})
-	}
 	wss();
 },false);
 if('serviceWorker' in navigator){

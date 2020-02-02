@@ -12,7 +12,6 @@ var
 	btcChat=true,
 	startingX,
 	scrollTimeout,
-	apppage=false,
 	version="0.0.4";
 
 function wss(){
@@ -109,10 +108,10 @@ function chatPrint(){
 function validate(d){
 	try{
 		o=JSON.parse(d);
-		if(apppage&&typeof(o.mod)!=="undefined"&&o.mod==="btc"&&btcChat===true){
+		if(chatInput&&typeof(o.mod)!=="undefined"&&o.mod==="btc"&&btcChat===true){
 			chatStack({"n":"btc-bot","m":"&euro; "+o.btc_euro});
 			setColor("life","green");
-		}else if(apppage&&typeof(o.mod)!=="undefined"&&o.mod==="chat"){
+		}else if(chatInput&&typeof(o.mod)!=="undefined"&&o.mod==="chat"){
 			chatParser();
 			setColor("life","green");
 		}
@@ -180,6 +179,7 @@ function initChat(){
 			}
 		}
 	});
+	initTouch();
 }
 function changeToInput(){
 	chatInput.setAttribute("maxlength",128);
@@ -361,7 +361,7 @@ function initTouch(){
 	function scrollTimer(){
 		scrollTimeout=setTimeout(()=>{
 			p2.scrollTo(0,document.getElementById(p2.id).scrollHeight);
-		},700);
+		},700)
 	}
 }
 function height(){
@@ -372,14 +372,9 @@ function height(){
 	content.style.top=document.getElementById("nav").offsetHeight+"px";
 }
 document.addEventListener("DOMContentLoaded",()=>{
-	if(document.location.pathname==='/'){
-		apppage=true;
-		initTouch();
-	}else height();
 	window.addEventListener("resize",()=>{
-		if(!apppage)
-			height();
-		else initTouch();
+		if(chatInput) initTouch();
+		else height();
 		scrollDown();
 	});
 	if(document.getElementById("version"))
@@ -392,8 +387,8 @@ document.addEventListener("DOMContentLoaded",()=>{
 		});
 	}
 	chatInput=document.getElementById("cI");
-	if(chatInput)
-		initChat();
+	if(chatInput) initChat();
+	else height();
 	wss();
 },false);
 if('serviceWorker' in navigator){

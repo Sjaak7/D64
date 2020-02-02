@@ -16,7 +16,7 @@ comment()
 # Install curl
 #####
 
-sudo apt install curl -y
+sudo apt install curl minify -y
 
 #####
 # Install/Update docker
@@ -59,8 +59,12 @@ sudo mount -t tmpfs -o rw,size=10M tmpfs ./ramdisk/webroot
 sudo mount -t tmpfs -o rw,size=30M tmpfs ./ramdisk/nginx
 
 cp -R webroot/includes ramdisk/webroot/
-cp -R webroot/css ramdisk/webroot/
-cp -R webroot/js ramdisk/webroot/
+#cp -R webroot/css ramdisk/webroot/
+mkdir ramdisk/webroot/css
+cat webroot/css/w3.css | minify --type=css > ramdisk/webroot/css/w3.css
+#cp -R webroot/js ramdisk/webroot/
+mkdir ramdisk/webroot/js
+cat webroot/js/d64.js | minify --type=js > ramdisk/webroot/js/d64.js
 cp -R webroot/cache ramdisk/webroot/
 cp -R webroot/blog ramdisk/webroot/
 cp -R webroot/img ramdisk/webroot/
@@ -72,7 +76,8 @@ cp webroot/favicon.ico ramdisk/webroot/
 cp webroot/robots.txt ramdisk/webroot/
 cp webroot/manifest.json ramdisk/webroot/
 cp webroot/index.php ramdisk/webroot/
-cp webroot/service-worker.js ramdisk/webroot/
+#cp webroot/service-worker.js ramdisk/webroot/
+cat webroot/service-worker.js | minify --type=js > ramdisk/webroot/service-worker.js
 cp config/d64.conf.json ramdisk/webroot/includes/
 
 #####

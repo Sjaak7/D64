@@ -2,6 +2,7 @@
 
 class d64Header{
   private object $d64;
+	private string $title = "";
   private string $description = "";
   private string $script = "";
   private string $nav = "";
@@ -12,12 +13,17 @@ class d64Header{
     $this->d64 = $d64;
   }
 
-  public function set_script(string $script)
+  public function set_script(string $script) : void
   {
     $this->script = $script;
   }
 
-  public function set_description(string $desc)
+	public function set_title(string $title) : void
+	{
+		$this->title = $title;
+	}
+
+  public function set_description(string $desc) : void
   {
     $this->description = $desc;
   }
@@ -29,10 +35,10 @@ class d64Header{
 		'<head>'.
 		'<meta name=viewport content="width=device-width, initial-scale=1">'.
 		'<meta name=theme-color content="#616161">'.
-		'<meta name=description contant="'.$this->description.'">'.
+		'<meta name=description content="'.$this->description.'">'.
 		'<link rel=stylesheet href="/css/w3.css">'.
 		'<link rel=manifest href="/manifest.json">'.
-		'<title>'.$this->d64->get_title().'</title>'.
+		'<title>'.$this->title.'</title>'.
 		$this->script.
 		'</head>'.
 		'<body>'.

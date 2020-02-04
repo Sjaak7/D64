@@ -29,7 +29,7 @@ class d64Blog{
         }
       }else{
         if(is_file(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php')){
-          $this->d64->set_title("Blog");
+          $this->d64->header->set_title("Blog");
           ob_start();
           include(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php');
           $this->d64->setContent('<div id=content>'.str_replace("\n","",ob_get_contents()).'</div>');
@@ -72,7 +72,8 @@ class d64Blog{
 					"artikel_formatted" => ""
 				];
 				$artikel["artikel"] = array_slice($file,4);
-				$this->d64->set_title($artikel["title"]);
+				$this->d64->header->set_description($artikel["korte_inleiding"]);
+				$this->d64->header->set_title($artikel["title"]);
 				foreach($artikel["artikel"] AS $key => $value){
 					$artikel["artikel_formatted"] .= '<p>'.str_replace("\n","<br>",$value).'</p>';
 				}

@@ -13,7 +13,6 @@ class d64 {
   private array $virtual_paths;
   public array $path;
   private array $parsed_url = ['path'=>'','url'=>''];
-  private string $title;
   private string $content;
 
   private array $module;
@@ -46,11 +45,6 @@ class d64 {
     }
   }
 
-  public function set_title(string $title) : void
-  {
-    $this->title = $title;
-  }
-
   public function setContent(string $content) : void
   {
     $this->content = $content;
@@ -78,13 +72,6 @@ class d64 {
     return $this->pages;
   }
 
-  public function get_title(): string
-  {
-    if(isset($this->title))
-      return $this->title;
-    else return "";
-  }
-
   public function init() : bool
   {
     /*
@@ -104,7 +91,9 @@ class d64 {
            !$this->query_string_check($this->parsed_url['query'],$this->pages['root'])){
           $this->not_found();
         }else{
-         $this->title = $this->pages['root']['title'] ?? "Frontpage";
+		if(isset($this->pages['root']['title']))
+			$this->header->set_title($this->pages['root']['title']);
+		else $this->header->set_title("Frontpage");
         }
     }
 
@@ -115,7 +104,7 @@ class d64 {
     elseif(isset($this->pages[$this->path[0]])){
       switch ($this->pages[$this->path[0]]['data']){
         case 'virtual':
-          $this->title = $this->pages[$this->path[0]]['title'] ?? "";
+          $this->header->set_title($this->pages[$this->path[0]]['title']);
           $this->parse_virtual_dirs($this->virtual_paths);
           if(isset($this->pages[$this->path[0]]['class']) && empty($this->module[$this->path[0]])){
             $this->module[$this->path[0]] = new $this->pages[$this->path[0]]['class']($this);
@@ -211,7 +200,7 @@ class d64 {
 
   public function not_found()
   {
-    $this->title = "Whoops";
+    $this->header->set_title("Whoops");
     $this->content = "404 niet gevonden";
     http_response_code(404);
   }

@@ -58,10 +58,9 @@ $d64->init();
 
 $d64->header->set_script('<script src="/js/d64.js"></script>');
 
-echo $d64->header->makeHeader().
-//	'<div class="container" id="content">'.
-		$d64->getContent().
-//	'</div>'.
+echo
+	$d64->header->makeHeader().
+	$d64->getContent().
 	$d64->footer->makeFooter();
 
 ?>

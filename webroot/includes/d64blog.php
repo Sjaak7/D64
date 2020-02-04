@@ -1,90 +1,81 @@
 <?php
 
 class d64Blog{
-  private object $d64;
+	private object $d64;
 
-  public function __construct($d64)
-  {
-    $this->d64 = $d64;
+	public function __construct($d64)
+	{
+		$this->d64 = $d64;
 
-    if(isset($this->d64->get_path()[0]) && $this->d64->get_path()[0]==='blog'){
-      if(isset($_GET['404'])){
-        $this->d64->not_found();
-      }
-      /*
-      * When a trailing slash is missing the the request does exists!
-      * We only want to serve news articles
-      */
-      elseif($this->d64->get_parsed_url()['path'][-1]!='/'){
-        if(empty($this->d64->get_path()[4])){
-          $path = $this->d64->get_path();
-          if(end($path)!='content.php'){
-            $query_strings = (isset($this->d64->get_parsed_url()['query'])) ? '?'.$this->d64->get_parsed_url()['query'] : "";
-            header("Location: ".URL.$this->d64->get_parsed_url()['path']."/".$query_strings,true,301);
-          }else{
-            $this->d64->not_found();
-          }
-        }elseif(preg_match('/^\/blog\/\d{4}\/\d{1,2}\/\d{1,2}\/.[^.]*$/',$this->d64->get_parsed_url()['path'])){
-          $this->d64->setContent('<div id=content><h1>Blog</h1>'.$this->nieuwsformatter($this->d64).'</div>');
-        }
-      }else{
-        if(is_file(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php')){
-          $this->d64->header->set_title("Blog");
-          ob_start();
-          include(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php');
-          $this->d64->setContent('<div id=content>'.str_replace("\n","",ob_get_contents()).'</div>');
-          ob_end_clean();
-        }else{
-          $this->d64->not_found();
-        }
-      }
-    }
-  }
+		if(isset($this->d64->get_path()[0]) && $this->d64->get_path()[0]==='blog'){
+			if(isset($_GET['404']))
+				$this->d64->not_found();
+			/*
+			* When a trailing slash is missing the the request does exists!
+			*/
+			elseif($this->d64->get_parsed_url()['path'][-1]!='/'){
+				if(empty($this->d64->get_path()[4])){
+					$path = $this->d64->get_path();
+					if(end($path)!='content.php'){
+						$query_strings = (isset($this->d64->get_parsed_url()['query'])) ? '?'.$this->d64->get_parsed_url()['query'] : "";
+						header("Location: ".URL.$this->d64->get_parsed_url()['path']."/".$query_strings,true,301);
+					}else $this->d64->not_found();
+				}elseif(preg_match('/^\/blog\/\d{4}\/\d{1,2}\/\d{1,2}\/.[^.]*$/',$this->d64->get_parsed_url()['path']))
+					$this->d64->setContent('<div id=content><h1>Blog</h1>'.$this->blogFormatter($this->d64).'</div>');
+			}else{
+				if(is_file(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php')){
+					$this->d64->header->set_title("Blog");
+					ob_start();
+					include(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php');
+					$this->d64->setContent('<div id=content>'.str_replace("\n","",ob_get_contents()).'</div>');
+					ob_end_clean();
+				}else $this->d64->not_found();
+			}
+		}
+	}
 
-  public function get_news(string $output = '') : string
-  {
-    $nieuws = explode("\n",file_get_contents(ROOTPATH.'/cache/last_10.txt'));
-    array_pop($nieuws);
+	public function getBlogs(string $output = '') : string
+	{
+		$blogs = explode("\n",file_get_contents(ROOTPATH.'/cache/last_10.txt'));
+		array_pop($blogs);
 
-    foreach($nieuws AS $key => $value){
-	$nieuws_item = explode("/",$value);
-	if(end($nieuws_item))
-		$output .= '<li id=nH-'.$key.'><a href="'.$value.'">'.ucfirst(str_replace("_"," ",end($nieuws_item))).'</a></li>';
-    }
+		foreach($blogs AS $key => $value){
+			$blog = explode("/",$value);
+			if($title = end($blog))
+				$output .= '<li id=nH-'.$key.'><a href="'.$value.'">'.ucfirst(str_replace("_"," ",$title)).'</a></li>';
+		}
 
-	if($output!='')
-		return '<ul class="nH">'.$output.'</ul>';
-	else
-		return 'Geen nieuws';
-  }
+		if($output!='')
+			return '<ul class="nH">'.$output.'</ul>';
+		else return 'Blogs';
+	}
 
-	private function nieuwsformatter() : string
+	private function blogFormatter() : string
 	{
 		if(!empty($this->d64->get_path()[4])){
 			$file = preg_split("/(?:\r\n?|\n){2,}/",file_get_contents(ROOTPATH.$this->d64->get_parsed_url()['path']));
 			if(count($file)>=5){
-				$artikel = [
+				$blog = [
 					"date"  => new DateTime($this->d64->get_path()[3].'-'.$this->d64->get_path()[2].'-'.$this->d64->get_path()[1]),
-					"auteur" => $file[0],
+					"author" => $file[0],
 					"title"  => $file[1],
-					"korte_inleiding" => $file[2],
-					"inleiding" => str_replace("\n","<br/>",$file[3]),
-					"artikel_formatted" => ""
+					"short_intro" => $file[2],
+					"intro" => str_replace("\n","<br/>",$file[3]),
+					"blog_formatted" => ""
 				];
-				$artikel["artikel"] = array_slice($file,4);
-				$this->d64->header->set_description($artikel["korte_inleiding"]);
-				$this->d64->header->set_title($artikel["title"]);
-				foreach($artikel["artikel"] AS $key => $value){
-					$artikel["artikel_formatted"] .= '<p>'.str_replace("\n","<br>",$value).'</p>';
-				}
+				$blog["blog"] = array_slice($file,4);
+				$this->d64->header->set_description($blog["short_intro"]);
+				$this->d64->header->set_title($blog["title"]);
+				foreach($blog["blog"] as $value)
+					$blog["blog_formatted"] .= '<p>'.str_replace("\n","<br>",$value).'</p>';
 				return '<p class="w3-small">'.
-					$artikel["date"]->format("d-m-Y").', auteur '.$artikel["auteur"].
+					$blog["date"]->format("d-m-Y").', auteur '.$blog["author"].
 					'</p><p>'.
-					$artikel["title"].
+					$blog["title"].
 					'</p><p>'.
-					$artikel["inleiding"].
+					$blog["intro"].
 					'</p>'.
-					$artikel["artikel_formatted"];
+					$blog["blog_formatted"];
 			}else return '<p class="w3-small">Meditation needed</p>';
 		}
 	}

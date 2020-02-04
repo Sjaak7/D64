@@ -167,7 +167,6 @@ function initChat(){
 	chatInput.addEventListener("keyup",function(e){
 	if(e.keyCode===13&&chatInput.value!==""){
 		chatInput.value=removeLinebreaks(chatInput.value);
-		// Set the nickname
 		if(getCookie("chat")===""){
 			if(checkNick(chatInput.value,"init"))
 				changeNick(chatInput.value);
@@ -341,8 +340,6 @@ function initTouch(){
                 }else endMove();
 	}
 	function endMove(change){
-	//	p1.style.transition="all .3s";
-	//	p2.style.transition="all .3s";
 		if(change>0)
 			p1.style.left="-100%";
 		else p1.style.left=screen.width;
@@ -388,7 +385,9 @@ document.addEventListener("DOMContentLoaded",function(){
 	}
 	chatInput=document.getElementById("cI");
 	if(chatInput) initChat();
-	else height();
+	else if(window.location.pathname.substr(1,4)==="blog"){
+		height();
+	}else height();
 	wss();
 },false);
 if('serviceWorker' in navigator){

@@ -448,6 +448,7 @@ class d64{
 
 require('./socket/d64btc.php');
 require('./socket/d64chat.php');
+require('./socket/d64blog.php');
 
 $d64 = new d64();
 $d64->registerModule([
@@ -465,6 +466,9 @@ $d64->registerModule([
 			'BTCtimer'	=>	30
 			]
 	]);
+$d64->registerModule([
+	'name'	=>	'blog64'
+]);
 
 $d64->server();
 

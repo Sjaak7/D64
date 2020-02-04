@@ -1,0 +1,13 @@
+Sjaak7
+
+Alles draait :)
+
+Een nieuw domein en alles is scherp! Eerste blog post op deze website/webapp.
+
+Een nieuw 2020, een nieuw domein en alles is scherp. Na heel lang bijna geen computer te hebben aangeraakt vind ik het tijd voor een zelfstudie.
+
+Deze website draait op een VPS bij TransIP achter een eerste firewall van TransIp. Debian 10 is geinstalleerd als besturingssysteem en nftables als beheerder voor de tweede firewall. Nginx is geinstalleerd als webserver binnen een Docker omgeving en ik maak gebruik van een in eigen beheer gemaakte PHP omgeving. Volgens <a href="https://developers.google.com/speed/pagespeed/insights/?url=https%3A%2F%2Fd64.nl%2Fblog%2F2020%2F01%2F02%2Falles_draait">Google PageSpeed Insights</a> heeft deze website een 100% score al zijn er nog genoeg verbeteringen aan te brengen. De website verbinding is encrypted met een gratis LetsEncrypt SSL certificaat, werkt middels HTTP/2 met push verbindingen en is via IPv4 en IPv6 beschikbaar.
+
+Het plan is om de gehele omgeving ter beschikking te stellen via git.
+
+Je kunt me bereiken op IRC, irc.onzin.org #radio

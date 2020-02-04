@@ -1,0 +1,31 @@
+Gerda
+
+D64, alpha
+
+Features voor de alpha versie van de WebSocket chat in PHP
+
+Overzicht met ingebouwde features voor het D64 framewerk alpha:
+
+- Dockerized
+
+Nginx, PHP-FPM en PHP-Cli draaien in hun eigen Docker. Makkelijk en snel herstarten. Herstart automatisch bij crash.
+
+- D64 modules en virtuele mappen
+
+/blog/ is een module met 'echte' mappen en bestanden en bijvoorbeeld /offline/ is een virtuele map. Modules zijn classes en alles is gecentraliseerd naar het /index.php bestand middels interne 404 afhandeling.
+
+- D64 WebSocket server
+
+De websocket server draait in een PHP-Cli docker en is via een Nginx proxy_pass benaderbaar. De server handelt de handshakes af, houdt de ping en pongs bij en doet de disconnects wanneer nodig.
+
+- D64 WebSocket bitcoin module
+
+Mini module om de 'laatste' BTC prijs door te geven aan WebSocket clients
+
+- D64 WebSocket chat module
+
+Mini module voor chat met ondersteuning voor nicknaam
+
+- 95% PWA voorbereid
+
+- De website/app is installeerbaar op android. Veel icons missen nog, bijvoorbeeld die voor Apple..

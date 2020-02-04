@@ -1,0 +1,11 @@
+Stuntman
+
+Test je website
+
+Je website testen en optimaliseren, een paar tips
+
+Je website testen is misschien wel het belangrijkste voor het bouwen van een succesvolle website. In 2020 zijn HTTP (dus zonder S) websites not done, zorg dat al je verkeer via HTTPS verloopt maar ook met een HTTPS website valt er nog genoeg te controleren en te optimaliseren. Gebruik de website van <a href="https://www.ssllabs.com/ssltest/">SSL Labs</a> om je HTTPS omgeving te testen. De beste scores die je hier kunt halen zijn A+ voor de IPv4 en IPv6 ingang.
+
+Heb jij je HTTPS omgeving goed voor elkaar? Kijk dan eens naar de website <a href="https://gtmetrix.com/">GTmetrix</a>. Op deze website kun je gemakkelijk bekijken wat je score is op belangrijke punten zoals caching, compressie en redirects etc. Een score van 90% is relatief gemakkelijk te behalen met vaak wat kleine aanpassingen maar 100% is natuurlijk het mooiste :)
+
+Progressive Web Application ofwel PWA is de nieuwe standaard voor het bouwen van 'apps' die net als een native app geheel geintegreerd op Android en Apple telefoons kunnen werken. Voor het testen van PWA's kun je het beste gebruik maken van de Lighthouse omgeving die in Chromium is ingebouw. Lighthouse kun je vinden in de 'Webtools' van Chromium. Naast Lighthouse zijn is de webdeveloper console in Firefox ook aan te raden om jouw PWA te testen en zonodig te verbeteren. Op naar een sneller en beter internet!

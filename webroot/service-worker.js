@@ -1,10 +1,10 @@
-var C='v1';
+var C='v1.1';
 self.addEventListener('install',(e)=>{
-	console.log('The service worker is being installed.');
+	console.log('Installing');
 	e.waitUntil(preCache())
 });
 self.addEventListener('fetch',(e)=>{
-	console.log('The service worker is serving the asset.');
+	console.log('Serving asset.');
 	e.waitUntil(update(e.request))
 });
 function preCache(){

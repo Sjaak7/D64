@@ -3,7 +3,6 @@
 class d64Header{
   private object $d64;
   private string $description = "";
-  private string $inline_css = "";
   private string $script = "";
   private string $nav = "";
   private string $parent;
@@ -11,11 +10,6 @@ class d64Header{
   function __construct($d64)
   {
     $this->d64 = $d64;
-  }
-
-  public function set_inline_css(string $css)
-  {
-    $this->inline_css = '<style>'.$css.'</style>';
   }
 
   public function set_script(string $script)
@@ -31,21 +25,20 @@ class d64Header{
   public function makeHeader() : string
   {
 	return '<!DOCTYPE html>'.
-		'<html lang="nl">'.
+		'<html lang=nl>'.
 		'<head>'.
-		'<meta name="viewport" content="width=device-width, initial-scale=1">'.
-		'<meta name="theme-color" content="#616161">'.
-		'<link rel="stylesheet" href="/css/w3.css">'.
-		'<link rel="manifest" href="/manifest.json">'.
+		'<meta name=viewport content="width=device-width, initial-scale=1">'.
+		'<meta name=theme-color content="#616161">'.
+		'<meta name=description contant="'.$this->description.'">'.
+		'<link rel=stylesheet href="/css/w3.css">'.
+		'<link rel=manifest href="/manifest.json">'.
 		'<title>'.$this->d64->get_title().'</title>'.
-		'<meta name="description" content="'.$this->description.'">'.
-		$this->inline_css.
 		$this->script.
 		'</head>'.
 		'<body>'.
-		'<div class="w3-bar w3-top w3-black" id="nav">'.
+		'<div class="w3-bar w3-top w3-black" id=nav>'.
 			$this->nav.
-			'<span class="w3-bar-item w3-right" id="life">&#9679;</span>'.
+			'<span class="w3-bar-item w3-right" id=life>&#9679;</span>'.
 		'</div>';
   }
 

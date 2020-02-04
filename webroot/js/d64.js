@@ -17,22 +17,22 @@ var
 function wss(){
 	try{
 		S=new WebSocket("wss://d64.nl/live");
-		S.onopen=()=>{
+		S.onopen=function(){
 			setColor("life","green");
 			if(window.location.pathname==='/')
 				send(JSON.stringify({mod:"chat",rq:"init"}));
 			if(chatInput!==null)
 				initChatInput();
 		};
-		S.onerror=(e)=>{
+		S.onerror=function(e){
 			l(e);
 		};
-		S.onmessage=(m)=>{
+		S.onmessage=function(m){
 			setColor("life","#ff0");
 			validate(m.data);
 			l(m.data)
 		};
-		S.onclose=()=>{
+		S.onclose=function(){
 			setColor("life","red");
 			chatConnStatus();
 			if(!document[hidden])
@@ -139,7 +139,7 @@ if(typeof(document.hidden)!=="undefined"){
 }
 function handleVisibilityChange(){
 	if(document[hidden]){
-		S.onclose=()=>{};
+		S.onclose=function(){};
 		S.close()
 	}else wss()
 }
@@ -164,7 +164,7 @@ function getCookie(cname){
 }
 function initChat(){
 	initChatInput();
-	chatInput.addEventListener("keyup",(e)=>{
+	chatInput.addEventListener("keyup",function(e){
 	if(e.keyCode===13&&chatInput.value!==""){
 		chatInput.value=removeLinebreaks(chatInput.value);
 		// Set the nickname
@@ -359,7 +359,7 @@ function initTouch(){
 		initTouch();
 	}
 	function scrollTimer(){
-		scrollTimeout=setTimeout(()=>{
+		scrollTimeout=setTimeout(function(){
 			p2.scrollTo(0,document.getElementById(p2.id).scrollHeight);
 		},700)
 	}
@@ -371,8 +371,8 @@ function height(){
 	content.style.height=maxPanelHeight;
 	content.style.top=document.getElementById("nav").offsetHeight+"px";
 }
-document.addEventListener("DOMContentLoaded",()=>{
-	window.addEventListener("resize",()=>{
+document.addEventListener("DOMContentLoaded",function(){
+	window.addEventListener("resize",function(){
 		if(chatInput) initTouch();
 		else height();
 		scrollDown();
@@ -380,7 +380,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 	if(document.getElementById("version"))
 		document.getElementById("version").innerHTML=version;
 	if(document.getElementById("btc")){
-		document.getElementById("btc").addEventListener("change",()=>{
+		document.getElementById("btc").addEventListener("change",function(){
 			if(this.checked)
 				btcChat=true;
 			else btcChat=false;
@@ -392,9 +392,9 @@ document.addEventListener("DOMContentLoaded",()=>{
 	wss();
 },false);
 if('serviceWorker' in navigator){
-	navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).then((r)=>{
+	navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).then(function(r){
 		l('Registration succeeded. Scope is '+r.scope);
-	}).catch((e)=>{
+	}).catch(function(e){
 		l('Registration failed with '+e);
 	});
 }

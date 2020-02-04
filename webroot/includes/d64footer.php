@@ -18,7 +18,7 @@ class d64Footer{
 	public function makeFooter() : string
 	{
 		return
-			'<div class="w3-bar w3-bottom w3-black" id="footer">'.
+			'<div class="w3-bar w3-bottom w3-black" id=footer>'.
 				$this->footer.
 			'</div>'.
 			'</body>'.

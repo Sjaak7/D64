@@ -16,7 +16,7 @@ comment()
 # Install curl
 #####
 
-sudo apt install curl minify -y
+sudo apt install curl minify uglifyjs -y
 
 #####
 # Install/Update docker
@@ -65,6 +65,7 @@ cat webroot/css/w3.css | minify --type=css > ramdisk/webroot/css/w3.css
 #cp -R webroot/js ramdisk/webroot/
 mkdir ramdisk/webroot/js
 cat webroot/js/d64.js | minify --type=js > ramdisk/webroot/js/d64.js
+uglifyjs ramdisk/webroot/js/d64.js -o ramdisk/webroot/js/d64.js
 cp -R webroot/cache ramdisk/webroot/
 cp -R webroot/blog ramdisk/webroot/
 cp -R webroot/img ramdisk/webroot/

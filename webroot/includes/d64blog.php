@@ -25,14 +25,14 @@ class d64Blog{
             $this->d64->not_found();
           }
         }elseif(preg_match('/^\/blog\/\d{4}\/\d{1,2}\/\d{1,2}\/.[^.]*$/',$this->d64->get_parsed_url()['path'])){
-          $this->d64->setContent('<div id="content"><h1>Blog</h1>'.$this->nieuwsformatter($this->d64).'</div>');
+          $this->d64->setContent('<div id=content><h1>Blog</h1>'.$this->nieuwsformatter($this->d64).'</div>');
         }
       }else{
         if(is_file(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php')){
           $this->d64->set_title("Blog");
           ob_start();
           include(ROOTPATH.$this->d64->get_parsed_url()['path'].'content.php');
-          $this->d64->setContent('<div id="content">'.str_replace("\n","",ob_get_contents()).'</div>');
+          $this->d64->setContent('<div id=content>'.str_replace("\n","",ob_get_contents()).'</div>');
           ob_end_clean();
         }else{
           $this->d64->not_found();
@@ -49,7 +49,7 @@ class d64Blog{
     foreach($nieuws AS $key => $value){
 	$nieuws_item = explode("/",$value);
 	if(end($nieuws_item))
-		$output .= '<li id="nH-'.$key.'"><a href="'.$value.'">'.ucfirst(str_replace("_"," ",end($nieuws_item))).'</a></li>';
+		$output .= '<li id=nH-'.$key.'><a href="'.$value.'">'.ucfirst(str_replace("_"," ",end($nieuws_item))).'</a></li>';
     }
 
 	if($output!='')
@@ -74,7 +74,7 @@ class d64Blog{
 				$artikel["artikel"] = array_slice($file,4);
 				$this->d64->set_title($artikel["title"]);
 				foreach($artikel["artikel"] AS $key => $value){
-					$artikel["artikel_formatted"] .= '<p>'.str_replace("\n","<br/>",$value).'</p>';
+					$artikel["artikel_formatted"] .= '<p>'.str_replace("\n","<br>",$value).'</p>';
 				}
 				return '<p class="w3-small">'.
 					$artikel["date"]->format("d-m-Y").', auteur '.$artikel["auteur"].

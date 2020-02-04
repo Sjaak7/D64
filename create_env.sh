@@ -151,7 +151,7 @@ sudo docker run \
         -w /usr/src/myapp \
 	-d \
         socket \
-        php socket/d64server.php
+        php ramdisk/webroot/index.php
 
 #####
 # Nginx container

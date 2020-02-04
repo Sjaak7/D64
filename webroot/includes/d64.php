@@ -2,11 +2,10 @@
 
 spl_autoload_register(function($className)
 {
-	if(!@include("$className.php"))
+	$filename = str_replace('_','/',$className).'.php';
+	if(!include(ROOTPATH.'/includes/'.$filename))
 		exit('Sysop is ziek');
 });
-
-define('ROOTPATH',str_replace("/includes","",__DIR__));
 
 class d64 {
   private array $pages;

@@ -20,8 +20,6 @@ Tested on Debian
 
 Requirements: Docker
 
-Be sure you build the Dockerfile in ./socket/ with "sudo docker build -t socket ."
-
 After that run sudo create_env.sh from the root dir
 
 License: GPL 2.0

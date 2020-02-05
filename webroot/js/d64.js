@@ -361,18 +361,11 @@ function initTouch(){
 		},700)
 	}
 }
-function height(){
-	var
-	maxPanelHeight=window.innerHeight-document.getElementById("footer").offsetHeight-document.getElementById("nav").offsetHeight+"px",
-	content=document.getElementById("content");
-	content.style.height=maxPanelHeight;
-	content.style.top=document.getElementById("nav").offsetHeight+"px";
-}
 document.addEventListener("DOMContentLoaded",function(){
 	window.addEventListener("resize",function(){
-		if(chatInput) initTouch();
-		else height();
-		scrollDown();
+		initTouch();
+		if(document.getElementById("cFrame"))
+			scrollDown();
 	});
 	if(document.getElementById("version"))
 		document.getElementById("version").innerHTML=version;
@@ -385,16 +378,14 @@ document.addEventListener("DOMContentLoaded",function(){
 	}
 	chatInput=document.getElementById("cI");
 	if(chatInput) initChat();
-	else if(window.location.pathname.substr(1,4)==="blog"){
-		height();
-	}else height();
+	else initTouch();
 	wss();
 },false);
 if('serviceWorker' in navigator){
-	navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).then(function(r){
+	navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(function(r){
 		l('Registration succeeded. Scope is '+r.scope);
 	}).catch(function(e){
-		l('Registration failed with '+e);
+		l('Registration with '+e);
 	});
 }
 })();

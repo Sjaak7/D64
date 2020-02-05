@@ -29,15 +29,10 @@ if(!defined('STDIN')){
 		else $bitprice = 'NaN';
 
 		$d64->setContent(
-			'<div class="swipePage visiblePage" id=p1>'.
-				'<h1>Lobby:</h1>'.
-				'<div id=cFrame>'.
-					'<div id=cB></div>'.
-					'<div class="w3-margin-top w3-small" id=cN></div>'.
-				'</div>'.
-			'</div>'.
-			'<div class="swipePage hiddenPage" id=p2>'.
-				'<h1>Swipe test</h1>'.
+			'<h1>Lobby:</h1>'.
+			'<div id=cFrame>'.
+				'<div id=cB></div>'.
+				'<div class="w3-margin-top w3-small" id=cN></div>'.
 			'</div>'
 		);
 		$d64->footer->setFooter(
@@ -51,10 +46,8 @@ if(!defined('STDIN')){
 		);
 	}elseif($d64->path[0]==='offline'){
 		$d64->setContent(
-			'<div id=content>'.
-				'<h1>Geen verbinding</h1>'.
-				'<p>Je hebt geen verbinding met internet. Ik probeer het opnieuw als de verbinding hersteld is.</p>'.
-			'</div>'
+			'<h1>Geen verbinding</h1>'.
+			'<p>Je hebt geen verbinding met internet. Ik probeer het opnieuw als de verbinding hersteld is.</p>'
 		);
 	}
 
@@ -64,10 +57,13 @@ if(!defined('STDIN')){
 
 	echo
 		$d64->header->makeHeader().
-		$d64->getContent().
+		'<div class="swipePage visiblePage" id=p1>'.
+			$d64->getContent().
+		'</div>'.
+		'<div class="swipePage hiddenPage" id=p2>'.
+			'<h1>Swipe test</h1>'.
+		'</div>'.
 		$d64->footer->makeFooter();
-}else{
-	require(ROOTPATH.'/includes/WebSocket/d64server.php');
-}
+}else require(ROOTPATH.'/includes/WebSocket/d64server.php');
 
 ?>

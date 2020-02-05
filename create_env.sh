@@ -78,7 +78,7 @@ cp webroot/robots.txt ramdisk/webroot/
 cp webroot/manifest.json ramdisk/webroot/
 cp webroot/index.php ramdisk/webroot/
 #cp webroot/service-worker.js ramdisk/webroot/
-cat webroot/service-worker.js | minify --type=js > ramdisk/webroot/service-worker.js
+cat webroot/sw.js | minify --type=js > ramdisk/webroot/sw.js
 cp config/d64.conf.json ramdisk/webroot/includes/
 
 #####
@@ -118,6 +118,8 @@ sudo docker run \
 #####
 # PHP Socket container
 #####
+
+sudo docker build -t socket .
 
 sudo docker stop Socket
 sudo docker rm Socket

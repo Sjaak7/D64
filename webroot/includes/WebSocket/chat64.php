@@ -9,7 +9,7 @@ class WebSocket_chat64
 	{
 		$this->d64 = &$parent;
 
-		if($chatData = file_get_contents('./ramdisk/webroot/cache/chat.json'))
+		if($chatData = file_get_contents('./webroot/cache/chat.json'))
 			$this->chatData = json_decode($chatData,true);
 	}
 
